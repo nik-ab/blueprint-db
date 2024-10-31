@@ -40,7 +40,7 @@ class Table:
         return self.name == other.name
     
     def __str__(self):
-        return f"{self.name} ({', '.join([str(column) for column in self.columns])}), pk: {self.primary_key.name}"
+        return f"{self.name} [{', '.join([str(column) for column in self.columns])}], pk: {self.primary_key.name}"
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
@@ -49,7 +49,7 @@ class RelationshipType(Enum):
     MANY_TO_MANY = 4
 
 class Relationship:
-    def __init__(self, name, from_table, to_table, type):
+    def __init__(self, name, from_table, to_table, type, columns=None):
         self.name = name
 
         self.from_table = from_table
@@ -57,8 +57,10 @@ class Relationship:
 
         self.type = type
 
+        self.columns = columns if columns is not None else []
+
     def __str__(self):
-        return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name})"
+        return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name}) [{', '.join([str(column) for column in self.columns])}]"
 
 class ERDiagram:
     def __init__(self, tables, relationships):
@@ -101,7 +103,8 @@ if __name__ == "__main__":
                 name = "adoption",
                 from_table = animal,
                 to_table = adopter,
-                type = RelationshipType.MANY_TO_ONE
+                type = RelationshipType.MANY_TO_ONE,
+                columns = [Column("adoption_date", AttributeType.DATE)]
             )
         ]
     )
