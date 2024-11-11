@@ -1,5 +1,7 @@
 from enum import Enum
 import pandas as pd
+import dataset
+import similarity_fasttext
 
 class AttributeType(Enum):
     STRING = 1
@@ -41,6 +43,13 @@ class Table:
     
     def __str__(self):
         return f"{self.name} [{', '.join([str(column) for column in self.columns])}], pk: {self.primary_key.name}"
+
+    def fit_to_dataset(self, dataset):
+        self.column_matches = []
+        for column in self.columns:
+            idx, _, _ = similarity_fasttext.get_best_match_idx(column.name, dataset.df.columns)
+            self.column_matches.append((dataset.name, dataset.df.columns[idx]))
+
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
@@ -109,3 +118,17 @@ if __name__ == "__main__":
         ]
     )
     print(diagram)
+
+
+    dataset1 = dataset.load_dataset("dataset1", "datasets/data.csv")
+    table_to_fit = Table(
+        name = "table_to_fit",
+        columns = [
+            Column("power", AttributeType.INTEGER),
+            Column("popularity", AttributeType.INTEGER),
+            Column("time", AttributeType.INTEGER)
+        ]
+    )
+    table_to_fit.fit_to_dataset(dataset1)
+    print(table_to_fit)
+    print(table_to_fit.column_matches)

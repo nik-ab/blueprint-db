@@ -1,19 +1,18 @@
-import fasttext.util
 import numpy as np
+from gensim.models import KeyedVectors
 
-fasttext.util.download_model('en', if_exists='ignore')
-ft = fasttext.load_model('cc.en.300.bin')
-print("Loaded FastText model")
-
+print("Loading Word2Vec model")
+model = KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin', binary=True)
+print("Loaded Word2Vec model")
 
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 def get_word_vector_safe(word):
-    res = ft.get_word_vector(word)
-    if np.linalg.norm(res) == 0:
+    if word in model:
+        return model[word]
+    else:
         raise ValueError(f"Word '{word}' not in vocabulary")
-    return res
 
 def get_best_match_idx(query, col_names):
     vectors = [get_word_vector_safe(c) for c in col_names]
@@ -22,9 +21,3 @@ def get_best_match_idx(query, col_names):
     
     idx = np.argmax(similarities)
     return (idx, col_names[idx], similarities[idx])
-
-
-if __name__ == "__main__":
-    cols = ["name", "idx", "age", "city", "country"]
-    _, match, _ = get_best_match_idx("time", cols)
-    print(match)
