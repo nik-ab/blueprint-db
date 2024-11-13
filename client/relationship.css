@@ -1,0 +1,49 @@
+.container div, .container input {
+        font-family: 'Roboto Mono', monospace;
+        font-weight: 400;
+    color: hsl(50, 20%, 15%);
+    font-size: 18px;
+    background-color: hsl(50, 20%, 80%);
+    width: fit-content;
+    padding:  4px 0px 4px 0px;
+    height: 60px;
+    /* adjust to control the size  */
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container{
+    
+    width: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container div {
+    user-select: none;
+}
+.container input {
+    outline: none;
+    border: none;
+}
+.container:has(input:focus){
+    filter: drop-shadow(0.5px 0px hsl(230, 60%, 60%)) 
+        drop-shadow(-0.5px 0px hsl(230, 60%, 60%)) 
+        drop-shadow(0px 0.5px hsl(230, 60%, 60%)) 
+        drop-shadow(0px -0.5px hsl(230, 60%, 60%)) 
+        drop-shadow(0.5px 0.5px hsl(230, 60%, 60%)) 
+        drop-shadow(-0.5px -0.5px hsl(230, 60%, 60%)) 
+        drop-shadow(-0.5px 0.5px hsl(230, 60%, 60%)) 
+        drop-shadow(0.5px -0.5px hsl(230, 60%, 60%))
+        drop-shadow(0px 0px hsl(230, 60%, 60%));
+}
+.container div:hover {
+    background-color: hsl(50, 20%, 85%);
+    cursor: pointer;
+}
+
+.container div.grabbing {
+    background-color: hsl(50, 20%, 45%);
+    cursor: grabbing;
+}

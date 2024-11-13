@@ -1,0 +1,40 @@
+div, input {
+    display: block;
+    font-family:'Roboto Mono', monospace;
+    font-weight: 400;
+    color: hsl(252, 20%, 15%);
+    font-size: 18px;
+    background-color: hsl(252, 20%, 80%);
+    border: 1px solid hsl(252, 20%, 70%);
+    width: fit-content;
+    padding:  8px 16px 8px 16px;
+    border-radius: 2px;
+    height: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+div {
+    user-select: none;
+}
+
+div:hover {
+    background-color: hsl(252, 20%, 85%);
+    border-color: hsl(252, 20%, 75%);
+    cursor: pointer;
+}
+input:focus {
+    border: 2px solid hsl(250, 60%, 60%);
+    box-shadow: none;
+    outline: none;
+}
+div.selected{
+    background-color: hsl(252, 20%, 45%);
+    border: 0px;
+}
+div.grabbing {
+    background-color: hsl(252, 20%, 45%);
+    cursor: grabbing;
+}

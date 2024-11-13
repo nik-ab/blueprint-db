@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Blueprint DB</title>
+    <script type="module" src="custom-elements.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="title">BLUEPRINT DB</div>
+    <div id="editor">
+      <div id="canvas-container">
+        <div id="button-container">
+          <div id="add-entity-button" class="start">+ Entity</div>
+
+          <div id="add-relationship-button" class="start">+ Relationship</div>
+
+          <div id="add-attribute-button" class="start">+ Attribute</div>
+
+          <div id="delete-button" class="delete">Delete</div>
+        </div>
+        <div id="canvas-div">
+          <canvas id="canvas" width="1000" height="750"></canvas>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div id="generate-button"><div>Generate</div></div>
+    </div>
+  </body>
+
+  <script src="script.js"></script>
+</html>

@@ -1,0 +1,187 @@
+#canvas-container {
+    width: 1000px;
+    height: 750px;
+    padding: 4px;
+    border-radius: 4px;
+    background-color: hsl(223, 13%, 11%);
+    border: 1px solid hsl(223, 13%, 21%);
+    position: relative;
+    display: flex;
+    
+}
+#canvas-div {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+#title {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    color: hsl(231, 48%, 75%);
+    font-size: 40px;
+    margin: 4px;
+}
+body {
+    background: rgb(63, 67, 85);
+    background: radial-gradient(circle, rgb(64, 69, 92) 0%, rgba(0, 0, 0, 1) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+}
+#editor{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#canvas-div> *:not(canvas){
+    position: absolute;
+}
+#button-container {
+    position: absolute;
+    left: -200px;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 4px;
+}
+#button-container div, #generate-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: hsl(0, 0%, 90%);
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 400;
+    font-size: 18px;
+    padding: 4px 8px 4px 8px;
+    border-radius: 4px;
+    margin: 4px;
+    cursor: pointer;
+    user-select: none;
+    width: 160px;
+}
+#generate-button{
+    background-image: linear-gradient(90deg, #00C0FF 0%, #011e70 49%, #3b3e7e 80%, #00C0FF 100%);
+    height: 40px;
+    padding: 4px ;
+
+}
+#generate-button div {
+    background-color: hsl(223, 13%, 11%);
+    text-transform: uppercase;
+    border-radius: 4px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#generate-button:hover {
+    animation: slidebg 1s linear infinite;
+    scale: 1.05;
+}
+
+#generate-button:active {
+    animation-duration: 0.4s;
+    scale: 0.98;
+}
+
+@keyframes slidebg {
+    to {
+        background-position: 20vw;
+    }
+}
+
+#generate-button:hover {
+    background-color: hsl(0, 61%, 60%);
+}
+#generate-button:active {
+    background-color: hsl(0, 61%, 40%);
+}
+
+#button-container div:not(#delete-button)  {
+    background-color: hsl(121, 36%, 41%);
+}
+#button-container  div:not(#delete-button):hover {
+    background-color: hsl(121, 36%, 51%);
+}
+
+#button-container div:not(#delete-button):active {
+    background-color: hsl(121, 36%, 31%);
+}
+
+#button-container #delete-button.delete {
+    background-color: hsl(0, 61%, 50%);
+}
+#button-container #delete-button.delete:hover {
+    background-color: hsl(0, 61%, 60%);
+}
+
+#button-container #delete-button.delete:active {
+    background-color: hsl(0, 61%, 40%);
+}
+#button-container .cancel:not(#x) {
+    background-color: hsl(37, 6%, 40%);
+}
+
+#button-container .cancel:hover:not(#x) {
+    background-color: hsl(37, 6%, 50%);
+}
+
+#button-container .cancel:active:not(#x) {
+    background-color: hsl(37, 6%, 30%);
+}
+
+#button-container .disabled:not(#x):not(#x) {
+    background-color: hsl(0, 0%, 70%);
+}
+#button-container .disabled:hover:not(#x):not(#x) {
+    cursor: default;
+}
+
+.circle-button {
+    border-radius: 50%;
+    position: absolute;
+    background-color: white;
+    opacity: 0.05;
+    z-index: 1000;
+}
+
+.circle-button:hover {
+    background-color: hsl(200, 100%, 50%);
+    opacity: 0.15;
+}
+
+.circle-button:active {
+    opacity: 0.2;
+}
+
+.selectable {
+    animation: tilt-shaking 0.3s linear infinite;
+}
+@keyframes tilt-shaking {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(3deg);
+    }
+
+    50% {
+        transform: rotate(0eg);
+    }
+
+    75% {
+        transform: rotate(-3deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
