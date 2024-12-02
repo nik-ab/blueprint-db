@@ -1,4 +1,4 @@
-danceability,energy,key,loudness,mode,speechiness,acousticness,instrumentalness,liveness,valence,tempo,duration_ms,time_signature,liked
+danceability,energy,key,loudness,mode,speechiness,acousticness,instrumentalness,liveness,valence,tempo,duration,time_signature,liked
 0.803,0.624,7,-6.764,0,0.0477,0.451,0.000734,0.1,0.628,95.968,304524,4,0
 0.762,0.703,10,-7.951,0,0.306,0.206,0.0,0.0912,0.519,151.329,247178,4,1
 0.261,0.0149,1,-27.528,1,0.0419,0.992,0.897,0.102,0.0382,75.296,286987,4,0
