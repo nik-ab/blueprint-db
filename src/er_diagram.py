@@ -44,12 +44,21 @@ class Table:
     def __str__(self):
         return f"{self.name} [{', '.join([str(column) for column in self.columns])}], pk: {self.primary_key.name}"
 
-    def fit_to_dataset(self, dataset):
-        self.column_matches = []
+    def find_column_matches(self, dataset):
+        column_matches = []
         for column in self.columns:
             idx, _, _ = similarity_fasttext.get_best_match_idx(column.name, dataset.df.columns)
-            self.column_matches.append((dataset.name, dataset.df.columns[idx]))
+            column_matches.append((dataset.name, dataset.df.columns[idx]))
+        return column_matches
 
+    def fit_to_dataset(self, dataset):
+        column_matches = self.find_column_matches(dataset)
+
+        df = pd.DataFrame()
+        for column, match in zip(self.columns, column_matches):
+            df[column.name] = dataset.df[match[1]]
+        
+        return df
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
@@ -129,6 +138,6 @@ if __name__ == "__main__":
             Column("time", AttributeType.INTEGER)
         ]
     )
-    table_to_fit.fit_to_dataset(dataset1)
-    print(table_to_fit)
-    print(table_to_fit.column_matches)
+    
+    df = table_to_fit.fit_to_dataset(dataset1)
+    df.to_csv("datasets/table_to_fit.csv", index=False)
