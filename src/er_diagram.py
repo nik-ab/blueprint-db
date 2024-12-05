@@ -26,39 +26,40 @@ class Column:
         return f"{self.name} ({self.type.name})"
 
 class Table:
-    def __init__(self, name, columns, primary_key=None):
+    def __init__(self, name, columns):
         self.name = name
         self.columns = columns
-
-        if primary_key is not None and primary_key not in columns:
-            raise ValueError("Primary key must be a column in the table")
-        if primary_key is None:
-            primary_key = Column("id", AttributeType.INTEGER)
-            self.columns.append(primary_key)            
-
-        self.primary_key = primary_key
 
     def __eq__(self, other):
         return self.name == other.name
     
     def __str__(self):
-        return f"{self.name} [{', '.join([str(column) for column in self.columns])}], pk: {self.primary_key.name}"
+        return f"{self.name} [{', '.join([str(column) for column in self.columns])}]"
 
-    def find_column_matches(self, dataset):
+    def find_column_matches(self, dataset, used_indexes):
         column_matches = []
         for column in self.columns:
-            idx, _, _ = similarity_fasttext.get_best_match_idx(column.name, dataset.df.columns)
-            column_matches.append((dataset.name, dataset.df.columns[idx]))
+            idx, _, _ = similarity_fasttext.get_best_match_idx(column.name, dataset.df.columns, used_indexes)
+            used_indexes.append(idx)
+            column_matches.append((dataset.name, idx))
+            
+            print(f"Matched {column.name} to {dataset.df.columns[idx]}")
+
         return column_matches
 
-    def fit_to_dataset(self, dataset):
-        column_matches = self.find_column_matches(dataset)
+    def fit_to_dataset(self, dataset, used_indexes = None):
+        if used_indexes is None:
+            used_indexes = []
+
+        column_matches = self.find_column_matches(dataset, used_indexes)
 
         df = pd.DataFrame()
-        for column, match in zip(self.columns, column_matches):
-            df[column.name] = dataset.df[match[1]]
+        for column, (df_name, match_idx) in zip(self.columns, column_matches):
+            df[column.name] = dataset.df[dataset.df.columns[match_idx]]
         
-        return df
+        df[self.name + "_id"] = range(len(df))
+
+        return (df, column_matches)
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
@@ -67,7 +68,7 @@ class RelationshipType(Enum):
     MANY_TO_MANY = 4
 
 class Relationship:
-    def __init__(self, name, from_table, to_table, type, columns=None):
+    def __init__(self, name, from_table, to_table, type):
         self.name = name
 
         self.from_table = from_table
@@ -75,10 +76,8 @@ class Relationship:
 
         self.type = type
 
-        self.columns = columns if columns is not None else []
-
     def __str__(self):
-        return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name}) [{', '.join([str(column) for column in self.columns])}]"
+        return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name})"
 
 class ERDiagram:
     def __init__(self, tables, relationships):
@@ -97,47 +96,57 @@ class ERDiagram:
         res += "\n\t\t".join([str(relationship) for relationship in self.relationships])
         return res
 
+    def fit_to_dataset(self, dataset):
+        res = []
+        
+        used_indexes = []
+        for table in self.tables:
+            df, matches = table.fit_to_dataset(dataset, used_indexes)
+            print(matches)
+            res.append((table, df))
+
+        for relationship in self.relationships:
+            if relationship.type != RelationshipType.ONE_TO_ONE:
+                raise NotImplementedError("Only one-to-one relationships are supported")
+
+            df = pd.DataFrame()
+            df[relationship.from_table.name + "_id"] = range(len(dataset.df))
+            df[relationship.to_table.name + "_id"] = range(len(dataset.df))
+
+            res.append((relationship, df)) 
+
+        return res
+
+
 if __name__ == "__main__":
-    animal = Table(
-        name = "animal",
+    dataset = dataset.load_dataset("dataset1", "datasets/data.csv")
+    
+    table1 = Table(
+        name = "table_1",
         columns = [
-            Column("name", AttributeType.STRING),
-            Column("age", AttributeType.INTEGER)
+            Column("power", AttributeType.INTEGER),
+            Column("popular", AttributeType.INTEGER),
+            Column("time", AttributeType.INTEGER)
         ]
     )
-    adopter = Table(
-        name = "adopter",
+    table2 = Table(
+        name = "table_2",
         columns = [
-            Column("name", AttributeType.STRING),
-            Column("phone", AttributeType.STRING),
-            Column("email", AttributeType.STRING)
+            Column("acoustics", AttributeType.INTEGER),
+            Column("instruments", AttributeType.INTEGER),
         ]
     )
 
     diagram = ERDiagram(
-        tables = [animal, adopter],
+        tables = [table1, table2],
         relationships = [
-            Relationship(
-                name = "adoption",
-                from_table = animal,
-                to_table = adopter,
-                type = RelationshipType.MANY_TO_ONE,
-                columns = [Column("adoption_date", AttributeType.DATE)]
-            )
+            Relationship("relationship_1", table1, table2, RelationshipType.ONE_TO_ONE)
         ]
     )
-    print(diagram)
 
+    dfs = diagram.fit_to_dataset(dataset)
 
-    dataset1 = dataset.load_dataset("dataset1", "datasets/data.csv")
-    table_to_fit = Table(
-        name = "table_to_fit",
-        columns = [
-            Column("power", AttributeType.INTEGER),
-            Column("popularity", AttributeType.INTEGER),
-            Column("time", AttributeType.INTEGER)
-        ]
-    )
-    
-    df = table_to_fit.fit_to_dataset(dataset1)
-    df.to_csv("datasets/table_to_fit.csv", index=False)
+    for table, df in dfs:
+        print(table)
+        df.to_csv(f"datasets/{table.name}.csv", index=False)
+        print()

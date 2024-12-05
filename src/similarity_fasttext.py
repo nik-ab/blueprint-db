@@ -18,16 +18,20 @@ def get_word_vector_safe(word):
         raise ValueError(f"Word '{word}' not in vocabulary")
     return res
 
-def get_best_match_idx(query, col_names):
+def get_best_match_idx(query, col_names, forbidden_idxs=[]):
     vectors = [get_word_vector_safe(c) for c in col_names]
     q = get_word_vector_safe(query)
-    similarities = [cosine_similarity(v, q) for v in vectors]
+    similarities = [cosine_similarity(v, q) + (0 if idx not in forbidden_idxs else -10) for idx, v in enumerate(vectors)]
     
     idx = np.argmax(similarities)
     return (idx, col_names[idx], similarities[idx])
 
 
 if __name__ == "__main__":
-    cols = ["name", "idx", "age", "city", "country"]
+    cols = ["danceability","energy","key","loudness","mode","speechiness","acousticness","instrumentalness","liveness","valence","tempo","duration_ms","time_signature","liked"]
+    
     _, match, _ = get_best_match_idx("time", cols)
+    print(match)
+
+    _, match, _ = get_best_match_idx("acoustics", cols)
     print(match)
