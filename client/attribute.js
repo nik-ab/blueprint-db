@@ -18,15 +18,40 @@ export class Attribute extends HTMLElement {
   set grabbing(value) {
     this.setAttribute('grabbing', value);
   }
+
+  get type() {
+    return this.getAttribute('type');
+  }
+
+  set type(value) {
+    this.setAttribute('type', value);
+  }
+
   static get observedAttributes() {
-    return ['title', 'grabbing'];
+    return ['title', 'grabbing', 'type'];
   }
   connectedCallback() {
     const shadow = this.attachShadow({ mode: 'open' });
     const wrapper = document.createElement('div');
     wrapper.innerHTML = `
-      <div>${this.getAttribute('title')}</div>
+      <div id = "outer"><div id = "inner">${this.getAttribute('title')}</div>
+        <select name="type" id="type">
+          <option value="1">STRING</option>
+          <option value="2">INTEGER</option>
+          <option value="3">FLOAT</option>
+          <option value="4">BOOLEAN</option>
+          <option value="5">DATE</option>
+          <option value="6">TIME</option>
+          <option value="7">DATETIME</option>
+          <option value="8">BINARY</option>
+        </select>
+      </div>
     `;
+    this.type = 1;
+    const select = wrapper.querySelector('#type')
+    select.addEventListener('change', () => {
+      this.type = select.value
+    });
 
     // Fetch and apply the external CSS
     fetch('attribute.css')
@@ -39,7 +64,7 @@ export class Attribute extends HTMLElement {
 
     shadow.appendChild(wrapper);
     this.addEventListener("dblclick", () => {
-      const div = this.shadowRoot.querySelector("div")
+      const div = this.shadowRoot.querySelector("#inner")
       const input = document.createElement('input')
       input.value = div.textContent
       const f = () => {
@@ -54,33 +79,37 @@ export class Attribute extends HTMLElement {
       })
       input.addEventListener("blur", () => {
         const value = input.value
-        this.shadowRoot.removeChild(input)
-        this.shadowRoot.appendChild(div)
+        const par = input.parentElement
+        par.removeChild(input)
+        par.insertBefore(div, par.firstChild)
         this.classList.remove("editing")
-        div.textContent = value
+        this.title = value
       })
-      this.shadowRoot.removeChild(div)
-      this.shadowRoot.appendChild(input)
+      const par = div.parentElement
+      par.removeChild(div)
+      par.insertBefore(input, par.firstChild)
       this.classList.add("editing")
 
       input.focus()
 
       input.selectionStart = input.selectionEnd = 10000
     })
-    this.shadowRoot.querySelector('div').textContent = this.title;
+    this.shadowRoot.querySelector('#inner').textContent = this.title;
     this.grabbing
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'title') {
-      this.shadowRoot.querySelector('div').textContent = newValue;
+      this.shadowRoot.querySelector('#inner').textContent = newValue;
     }
     if (name === 'grabbing') {
       if (newValue === 'true') {
-        this.shadowRoot.querySelector('div')?.classList.add('grabbing');
+        this.shadowRoot.querySelector('#inner')?.classList.add('grabbing');
       } else {
-        this.shadowRoot.querySelector('div')?.classList.remove('grabbing');
+        this.shadowRoot.querySelector('#inner')?.classList.remove('grabbing');
       }
     }
+    console.log(name, oldValue, newValue)
+
     // Handle other attributes if needed
   }
 

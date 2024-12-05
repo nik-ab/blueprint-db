@@ -74,7 +74,7 @@ export class Entity extends HTMLElement {
         this.shadowRoot.removeChild(input)
         this.shadowRoot.appendChild(div)
         this.classList.remove("editing")
-        div.textContent = value
+        this.title = value
       })
       this.shadowRoot.removeChild(div)
       this.shadowRoot.appendChild(input)

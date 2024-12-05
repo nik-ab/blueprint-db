@@ -73,8 +73,8 @@ export class Relationship extends HTMLElement {
                 const value = input.value
                 container.removeChild(input)
                 container.appendChild(div)
-                div.textContent = value
                 this.classList.remove("editing")
+                this.title = value
 
                 this.f();
             })

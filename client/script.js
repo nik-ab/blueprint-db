@@ -174,6 +174,57 @@ let elements = [];
 let connections = [];
 ///
 
+function convertToJSON() {
+    const elementToTable = new Map();
+    const relationshipsCovered = new Set();
+    const tables = [];
+    const relationships = [];
+    for (const element of elements) {
+        if (element.tagName !== "BDB-ENTITY") {
+            continue;
+        }
+        const table = {
+            name: element.title,
+            columns: []
+        };
+        for (const connection of connections) {
+            if (connection[0] === element) {
+                if (connection[1].tagName === "BDB-ATTRIBUTE") {
+                    table.columns.push({ name: connection[1].title, type: Number(connection[1].type) });
+                }
+            }
+        }
+        tables.push(table);
+        elementToTable.set(element, tables.length - 1);
+    }
+    for (const connection of connections) {
+        if (connection[1].tagName === "BDB-RELATIONSHIP"
+            && !relationshipsCovered.has(connection[1])) {
+
+            const relationship = {
+                name: connection[1].title,
+                tables: [],
+                relationshipType: [],
+            };
+            for (const connection2 of connections) {
+                if (connection2[1] === connection[1]) {
+                    relationship.tables.push(elementToTable.get(connection2[0]));
+                    relationship.relationshipType.push(connection2[2]);
+                    relationshipsCovered.add(connection2[0]);
+                }
+            }
+            relationships.push(relationship);
+            relationshipsCovered.add(connection[1]);
+        }
+    }
+    const json = {
+        tables,
+        relationships
+    }
+    return json;
+}
+
+
 const addEntity = (title) => {
     const entity = document.createElement("bdb-entity");
     entity.style.left = Math.random() * 80 + "%";
@@ -500,3 +551,116 @@ const addDragAndDrop = (element) => {
     }
     );
 }
+
+const generateButton = document.getElementById("generate-button");
+const modal = document.getElementById("result-modal");
+const tableContainer = document.getElementById("table-inner-container");
+const closeButton = document.getElementById("close-button");
+closeButton.addEventListener("click", closeModal);
+function closeModal() {
+    modal.style.display = "none";
+}
+closeModal();
+function openModal() {
+    modal.style.display = "flex";
+}
+generateButton.addEventListener("click", () => {
+    const requestData = convertToJSON();
+
+    console.log("click")
+    console.log(requestData);
+
+    fetch("http://localhost:5000/generate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestData)
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response data
+            console.log(data);
+
+            openModal();
+
+            // Function to generate and display the table
+            function displayTable(data) {
+                // Extract headers (keys of the object)
+                const headers = Object.keys(data);
+
+                // Determine the number of rows by looking at the length of the first key
+                const numRows = Object.keys(data[headers[0]]).length;
+
+                // Create the table element
+                const table = document.createElement('table');
+
+                // Create table header row
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Create table body
+                const tbody = document.createElement('tbody');
+                for (let i = 0; i < numRows; i++) {
+                    const row = document.createElement('tr');
+                    headers.forEach(header => {
+                        const td = document.createElement('td');
+                        td.textContent = data[header][i]; // Access the specific cell
+                        row.appendChild(td);
+                    });
+                    tbody.appendChild(row);
+                }
+                table.appendChild(tbody);
+
+                // Append the table to the container
+                tableContainer.innerHTML = ''; // Clear previous content
+                tableContainer.appendChild(table);
+            }
+            function jsonToCsv(json) {
+                const headers = Object.keys(json); // Extract headers
+                const numRows = Object.keys(json[headers[0]]).length; // Determine the number of rows
+
+                // Create CSV content
+                let csvContent = headers.join(",") + "\n"; // Add headers to CSV
+
+                // Loop through rows
+                for (let i = 0; i < numRows; i++) {
+                    const row = headers.map(header => json[header][i]); // Extract each row
+                    csvContent += row.join(",") + "\n"; // Add row to CSV
+                }
+
+                return csvContent;
+            }
+
+            // Function to download the CSV file
+            function downloadCsv(filename, csvContent) {
+                const blob = new Blob([csvContent], { type: 'text/csv' }); // Create a Blob
+                const url = URL.createObjectURL(blob); // Create a URL for the Blob
+                const a = document.createElement('a'); // Create a link element
+                a.href = url;
+                a.download = filename; // Set the filename
+                a.click(); // Programmatically click the link to start download
+                URL.revokeObjectURL(url); // Clean up the URL object
+            }
+
+            // Add event listener to the button
+            document.getElementById("download-csv").addEventListener("click", () => {
+                const csvContent = jsonToCsv(data); // Convert JSON to CSV
+                downloadCsv("data.csv", csvContent); // Trigger the download
+            });
+
+            // Call the function with the response data
+            displayTable(data);
+        })
+        .catch(error => {
+            // Handle the error
+            console.error(error);
+        });
+});
