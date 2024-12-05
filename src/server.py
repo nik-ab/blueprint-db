@@ -14,22 +14,27 @@ def convertJSONToERDiagram(json):
         columns = []
         for column_json in table_json["columns"]:
             print(column_json["type"])
-            columns.append(Column(column_json["name"], AttributeType(column_json["type"])))
+            columns.append(
+                Column(column_json["name"], AttributeType(column_json["type"])))
         tables.append(Table(table_json["name"], columns))
 
     relationships = []
     for relationship in json["relationships"]:
         table_idxs = relationship["tables"]
         relationship_types_arr = relationship["relationshipType"]
-        relationship_type = RelationshipType(relationship_types_arr[0] * 2 + relationship_types_arr[1]+ 1)
-        relationships.append(Relationship(relationship["name"], tables[table_idxs[0]], tables[table_idxs[1]], relationship_type))
+        relationship_type = RelationshipType(
+            relationship_types_arr[0] * 2 + relationship_types_arr[1] + 1)
+        relationships.append(Relationship(
+            relationship["name"], tables[table_idxs[0]], tables[table_idxs[1]], relationship_type))
 
-    return ERDiagram(tables, relationships)
+    return ERDiagram('table', tables, relationships)
+
 
 @app.route('/')
 def hello():
     print('hello world')
     return 'Hello, World!'
+
 
 @app.route('/generate', methods=['POST'])
 def generate():
@@ -37,7 +42,7 @@ def generate():
     print(er_diagram)
     converted = convertJSONToERDiagram(er_diagram)
     print(converted)
-    
+
     # Assuming you have a sample database stored as a pandas DataFrame
     sample_database = pd.DataFrame({
         'Name': ['John', 'Jane', 'Mike'],
@@ -46,7 +51,7 @@ def generate():
     })
 
     return sample_database.to_json()
-    
+
 
 if __name__ == '__main__':
     app.run()
