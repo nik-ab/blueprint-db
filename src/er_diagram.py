@@ -60,6 +60,14 @@ class Table:
         df[self.name + "_id"] = range(len(df))
 
         return (df, column_matches)
+    
+    def to_sql_schema(self, schema_name):
+        res = "CREATE TABLE " + schema_name + "." + self.name + " (\n"
+        res += "\t" + self.name + "_id INTEGER PRIMARY KEY,\n"
+        res += "\t" + ",\n\t".join([column.name + " " + column.type.name for column in self.columns])
+        res += "\n);"
+
+        return res
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
@@ -78,9 +86,21 @@ class Relationship:
 
     def __str__(self):
         return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name})"
+    
+    def to_sql_schema(self, schema_name):
+        res = "CREATE TABLE " + schema_name + "." + self.name + " (\n"
+        res += "\t" + self.from_table.name + "_id INTEGER UNIQUE,\n"
+        res += "\t" + self.to_table.name + "_id INTEGER UNIQUE,\n"
+        res += "\tPRIMARY KEY (" + self.from_table.name + "_id, " + self.to_table.name + "_id),\n"
+        res += "\tFOREIGN KEY (" + self.from_table.name + "_id) REFERENCES " + self.from_table.name + "(" + self.from_table.name + "_id),\n"
+        res += "\tFOREIGN KEY (" + self.to_table.name + "_id) REFERENCES " + self.to_table.name + "(" + self.to_table.name + "_id)\n"
+        res += ");"
+
+        return res
 
 class ERDiagram:
-    def __init__(self, tables, relationships):
+    def __init__(self, name, tables, relationships):
+        self.name = name
         self.tables = tables
         self.relationships = relationships
 
@@ -89,12 +109,25 @@ class ERDiagram:
                 raise ValueError("Invalid relationship")
 
     def __str__(self):
-        res = "ER DIAGRAM\n"
+        res = "ER DIAGRAM " + self.name + "\n"
         res += "\tTables:\n\t\t"
         res += "\n\t\t".join([str(table) for table in self.tables])
         res += "\n\tRelationships:\n\t\t"
         res += "\n\t\t".join([str(relationship) for relationship in self.relationships])
         return res
+
+
+    def to_sql_schema(self):
+        res = "CREATE SCHEMA " + self.name + ";\n\n"
+
+        for table in self.tables:
+            res += table.to_sql_schema(self.name) + "\n\n"
+
+        for relationship in self.relationships:
+            res += relationship.to_sql_schema(self.name) + "\n\n"
+
+        return res
+
 
     def fit_to_dataset(self, dataset):
         res = []
@@ -129,6 +162,7 @@ if __name__ == "__main__":
             Column("time", AttributeType.INTEGER)
         ]
     )
+
     table2 = Table(
         name = "table_2",
         columns = [
@@ -137,12 +171,15 @@ if __name__ == "__main__":
         ]
     )
 
-    diagram = ERDiagram(
+    diagram = ERDiagram( "hello_world",
         tables = [table1, table2],
         relationships = [
             Relationship("relationship_1", table1, table2, RelationshipType.ONE_TO_ONE)
         ]
     )
+
+    print(diagram.to_sql_schema())
+
 
     dfs = diagram.fit_to_dataset(dataset)
 
