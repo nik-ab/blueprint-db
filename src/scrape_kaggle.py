@@ -5,42 +5,31 @@ from dotenv import load_dotenv
 import openai
 import json
 
-# Loading environment variables
-load_dotenv()
+def create_kaggle_json(kaggle_username, kaggle_key):
+    if not kaggle_username or not kaggle_key:
+        raise ValueError("Kaggle username or key is missing. Check your .env file.")
 
-# Set up Kaggle environment variables directly in Python
-os.environ["KAGGLE_USERNAME"] = os.getenv("KAGGLE_USERNAME")
-os.environ["KAGGLE_KEY"] = os.getenv("KAGGLE_KEY")
-os.environ["GPT_KEY"] = os.getenv("GPT_KEY")
+    # Create the content for kaggle.json
+    kaggle_config = {
+        "username": kaggle_username,
+        "key": kaggle_key
+    }
 
-# Get Kaggle username and key from environment variables
-kaggle_username = os.getenv("KAGGLE_USERNAME")
-kaggle_key = os.getenv("KAGGLE_KEY")
+    # Define the path for kaggle.json
+    kaggle_dir = os.path.expanduser("~/.kaggle")
+    kaggle_json_path = os.path.join(kaggle_dir, "kaggle.json")
 
-if not kaggle_username or not kaggle_key:
-    raise ValueError("Kaggle username or key is missing. Check your .env file.")
+    # Ensure the ~/.kaggle directory exists
+    os.makedirs(kaggle_dir, exist_ok=True)
 
-# Create the content for kaggle.json
-kaggle_config = {
-    "username": kaggle_username,
-    "key": kaggle_key
-}
+    # Write kaggle.json
+    with open(kaggle_json_path, "w") as f:
+        json.dump(kaggle_config, f)
 
-# Define the path for kaggle.json
-kaggle_dir = os.path.expanduser("~/.kaggle")
-kaggle_json_path = os.path.join(kaggle_dir, "kaggle.json")
+    # Set the correct permissions for the file
+    os.chmod(kaggle_json_path, 0o600)
 
-# Ensure the ~/.kaggle directory exists
-os.makedirs(kaggle_dir, exist_ok=True)
-
-# Write kaggle.json
-with open(kaggle_json_path, "w") as f:
-    json.dump(kaggle_config, f)
-
-# Set the correct permissions for the file
-os.chmod(kaggle_json_path, 0o600)
-
-print(f"kaggle.json created successfully at {kaggle_json_path}")
+    print(f"kaggle.json created successfully at {kaggle_json_path}")
 
 def gptTableKeywords(tableName, tableCols):
     keyword_string = (f"Give me short search keywords that I can use to search for a dataset called '{tableName}'. "
@@ -62,24 +51,24 @@ def gptTableKeywords(tableName, tableCols):
 
     # Extract and clean the response text
     keywords = response.choices[0].message['content'].strip().split("\n")
+    keywords += [tableName]
     return keywords
 
-def getDatasetNames(keywords):
+def getDatasetNames(keywords, api):
     # Query the Kaggle API for datasets with the given keywords
     datasets = set()
 
     # Logging in to Kaggle
-    api = KaggleApi()
-    api.authenticate()
+    # api = KaggleApi()
+    # api.authenticate()
 
     for keyword in keywords:
         all_datasets = api.dataset_list(search=keyword)
         for dataset in all_datasets:
             datasets.add((dataset.ref, dataset.title))
-    #print(datasets)
     return datasets
 
-def chooseBestDataset(datasets, tableCols):
+def chooseBestDataset(datasets, tableCols, api):
     # Ask chatgpt which dataset is the best
     dataset_string = (f"I have found {len(datasets)} datasets that might be relevant. "
                       "Help me choose the best dataset that probably is the most similar with the title."
@@ -91,8 +80,6 @@ def chooseBestDataset(datasets, tableCols):
     
     dataset_string += "Please choose the best dataset for the given table columns: "
     dataset_string += str(tableCols)
-
-    print(dataset_string)
 
     # Set OpenAI API key
     openai.api_key = os.getenv("GPT_KEY")
@@ -113,25 +100,58 @@ def chooseBestDataset(datasets, tableCols):
     best_dataset_tag = best_dataset.split("&")[-1]
 
 
-    print(best_dataset_tag, best_dataset_name)
+   # Specify the name by which the data will be saved
+    download_path = "../datasets/temp_download/"
+    os.makedirs(download_path, exist_ok=True)
 
-    # Download the dataset
-    #api.dataset_download(best_dataset_tag, path="../datasets/")
     # Logging in to Kaggle
     # api = KaggleApi()
     # api.authenticate()
-    # download_path = "../datasets/"
-    # api.dataset_download_files(best_dataset_tag, path=download_path, unzip=True)
-    #api.dataset_download_files(best_dataset_tag, path="../datasets/", unzip=True)
+
+    # Download the dataset to a temporary folder
+    api.dataset_download_files(best_dataset_tag, path=download_path, unzip=True)
+
+    # Rename and move the file(s) to the desired location
+    final_save_path = f"../datasets/"
+
+    for file in os.listdir(download_path):
+        temp_file_path = os.path.join(download_path, file)
+        if os.path.isfile(temp_file_path) and file.endswith(".csv"):
+            new_file_path = os.path.join(final_save_path, f"{best_dataset_name}.csv")
+            os.rename(temp_file_path, new_file_path)
+
+    # Clean up the temporary download folder
+    for file in os.listdir(download_path):
+        temp_file_path = os.path.join(download_path, file)
+        if os.path.isfile(temp_file_path):
+            os.remove(temp_file_path)
+    os.rmdir(download_path)
     return best_dataset_name
 
 
-keywords = gptTableKeywords("boston weather", "date, temperature, precipitation, wind_speed, humidity")
-datasets = getDatasetNames(keywords)
-best_dataset = chooseBestDataset(datasets, "date, temperature, precipitation, wind_speed, humidity")
-print(best_dataset)
+def getDataset(tableName, tableCols):
+    # Loading environment variables
+    load_dotenv()
 
-# Download the dataset
-# api = KaggleApi()
-# api.authenticate()
-# api.dataset_download_files(dataset, path=download_path, unzip=True)
+    # Set up Kaggle environment variables directly in Python
+    os.environ["KAGGLE_USERNAME"] = os.getenv("KAGGLE_USERNAME")
+    os.environ["KAGGLE_KEY"] = os.getenv("KAGGLE_KEY")
+    os.environ["GPT_KEY"] = os.getenv("GPT_KEY")
+
+    # Get Kaggle username and key from environment variables
+    kaggle_username = os.getenv("KAGGLE_USERNAME")
+    kaggle_key = os.getenv("KAGGLE_KEY")
+
+    # Logging in to Kaggle
+    api = KaggleApi()
+    api.authenticate()
+
+    keywords = gptTableKeywords(tableName, tableCols)
+    datasets = getDatasetNames(keywords, api)
+    best_dataset = chooseBestDataset(datasets, tableCols, api)
+    return best_dataset
+
+# Example usage
+tableName = "animal shelter database"
+tableCols = "animal adopter"
+best_dataset = getDataset(tableName, tableCols)
