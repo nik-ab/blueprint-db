@@ -3,3 +3,4 @@
 *.bin.gz
 plots/*
 *.pyc
+gen/*
