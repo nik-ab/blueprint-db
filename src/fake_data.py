@@ -44,23 +44,32 @@ def get_col_distributions(tableCols):
     Returns the list of functions that return a random value for the given column distribution
     '''
     all_fake_columns = [get_fake_column(col.name, col.type) for col in tableCols]
-
-    for col in tableCols:
-        if col.type == int or col.type == float:
-            col.fake_data = lambda: random.uniform(col.type[0], col.type[1])
+    fake_functions = []
+    for i in range(len(all_fake_columns)):
+        col = tableCols[i]
+        if col.type == int:
+            cmin = int(all_fake_columns[i][0])
+            cmax = int(all_fake_columns[i][1])
+            fake_functions.append[lambda: random.randint(cmin, cmax)]
+        elif col.type == float:
+            cmin = float(all_fake_columns[i][0])
+            cmax = float(all_fake_columns[i][1])
+            fake_functions.append(lambda: random.uniform(cmin, cmax))
         elif col.type == bool:
-            col.fake_data = lambda: random.choice([0, 1])
+            fake_functions.append(lambda: random.choice([0, 1]))
         else:
-            col.fake_data = lambda: random.choice(col.type)
+            fake_functions.append(lambda: random.choice(all_fake_columns[i]))
 
-    return [get_fake_column(col.name, col.type) for col in tableCols]
+    return fake_functions
 
 def get_fake_row(tableCols):
     '''
     Returns a fake row for the given table columns
     Query the OpenAI API for fake data, for this
     '''
-    pass
+    fake_functions = get_col_distributions(tableCols)
+    fake_row = [func() for func in fake_functions]
+    return fake_row
 
 load_dotenv()
 
