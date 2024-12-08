@@ -1,4 +1,4 @@
-import kaggle
+#import kaggle
 from kaggle.api.kaggle_api_extended import KaggleApi
 import os
 from dotenv import load_dotenv
@@ -154,6 +154,14 @@ def getDataset(tableName, tableCols):
     return best_dataset
 
 # Example usage
-tableName = "animal shelter database"
-tableCols = "animal adopter"
+load_dotenv()
+kaggle_username = os.getenv("KAGGLE_USERNAME")
+kaggle_key = os.getenv("KAGGLE_KEY")
+create_kaggle_json(kaggle_username, kaggle_key)
+
+import kaggle
+
+
+tableName = "boston crime "
+tableCols = "crime street"
 best_dataset = getDataset(tableName, tableCols)
