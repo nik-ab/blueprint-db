@@ -1,3 +1,6 @@
+import pandas as pd
+from src.dataset import Diagram, Table, Relationship, RelationshipType
+
 def adjust_1_to_n_relationships(diagram, dfs, get_fake_row):
     """
     Adjusts rows in tables and relationships to ensure all 1-to-N relationships are properly represented.
