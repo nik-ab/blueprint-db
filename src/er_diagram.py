@@ -2,7 +2,7 @@ from enum import Enum
 import pandas as pd
 import dataset
 import gpt_wrapper
-# import similarity_fasttext
+import os
 
 class AttributeType(Enum):
     STRING = 1
@@ -36,31 +36,6 @@ class Table:
     
     def __str__(self):
         return f"{self.name} [{', '.join([str(column) for column in self.columns])}]"
-
-    # def find_column_matches(self, dataset, used_indexes):
-    #     column_matches = []
-    #     for column in self.columns:
-    #         idx, _, _ = similarity_fasttext.get_best_match_idx(column.name, dataset.df.columns, used_indexes)
-    #         used_indexes.append(idx)
-    #         column_matches.append((dataset.name, idx))
-            
-    #         print(f"Matched {column.name} to {dataset.df.columns[idx]}")
-
-    #     return column_matches
-
-    # def fit_to_dataset(self, dataset, used_indexes = None):
-    #     if used_indexes is None:
-    #         used_indexes = []
-
-    #     column_matches = self.find_column_matches(dataset, used_indexes)
-
-    #     df = pd.DataFrame()
-    #     for column, (df_name, match_idx) in zip(self.columns, column_matches):
-    #         df[column.name] = dataset.df[dataset.df.columns[match_idx]]
-        
-    #     df[self.name + "_id"] = range(len(df))
-
-    #     return (df, column_matches)
     
     def to_sql_schema(self, schema_name):
         res = "CREATE TABLE " + schema_name + "." + self.name + " (\n"
@@ -132,31 +107,37 @@ class ERDiagram:
 
     def gpt_query(self, dataset):
         query = "I have a bunch of table in a relational schema and each table has a bunch of columns\n"
-        query += "The names of the tables and its columns are provided in the following format (table_idx, table_name, column_idx_0, column_name_0,  column_idx_1, column_name_1, ...)\n"
+        query += "The names of the tables and its columns are provided in the following format (table_name, column_name_0, column_name_1, ...)\n"
         for i, table in enumerate(self.tables):
-            query += f"({i}, {table.name}, {', '.join([f'{j}, {column.name}' for j, column in enumerate(table.columns)])})\n"
+            query += f"({table.name}, {', '.join(column.name for column in table.columns)})\n"
         
         query += "I want to match each column in each dataset to one of the keywords below\n"
-        query += "The keywords are provided in the following format (keyword_idx, keyword_name)\n"
-        query += "\n".join([f"({i}, {keyword})" for i, keyword in enumerate(dataset.df.columns)])
+        query += "\n".join(dataset.df.columns)
 
-        query += "\nEach table column should be matched to exactly one keyword\n"
+        query += "\nEach table column should be matched to at most one keyword\n"
         query += "Each keyword should be matched to at most one table column\n"
+        query += "You can leave a table unmatched if you think no good match exists\n"
 
-        query += "Provide the answer in the following format (table_idx, table_column_idx, keyword_idx), where each tuple is on a new line\n"
+        query += "Provide the answer in the following format (table_name, column_name, keyword_name), where each tuple is on a new line\n"
         query += "I will be parsing your output, so please make sure it is in the correct format, and dont any extra text\n"
-        query += "An example output would be:\n"
-        query += "(0, 0, 0)\n(0, 1, 1)\n(1, 0, 2)\n(1, 1, 3)\n"
+        query += "An example input would be:\n"
+        query += "(dogs, name, weight)\n(cats, name, type, age)\n"
+        query += "dog_name, cat_name, kilos, species\n"
+        query += "An example output to this input would be:\n"
+        query += "(dogs, name, dog_name)\n(dogs, weight, kilos)\n(cats, name, cat_name)\n(cats, type, species)\n"
+        query += "Notice how I left cats.age unmatched, as there was no good match\n"
+
+        print(query)
 
         res = gpt_wrapper.ask_gpt(query)
        
+        print(res)
+
         triplets = res.split("\n")
-        matches = []
-        for triplet in triplets:
-            table_idx, table_column_idx, keyword_idx = triplet.split(",")
-            table_idx = table_idx.strip("(")
-            keyword_idx = keyword_idx.strip(")")
-            matches.append((int(table_idx), int(table_column_idx), int(keyword_idx)))
+        matches = [
+            [name.strip("() ") for name in triplet.split(",")] for triplet in triplets 
+        ]
+        print(matches)
         
         return matches
         
@@ -170,16 +151,20 @@ class ERDiagram:
             df[table.name + "_id"] = range(len(dataset.df))
         
 
-        for table_idx, table_column_idx, dataset_column_idx in matches:
+        for table_name, column_name, keyword_name in matches:
+            table_idx = [table.name for table in self.tables].index(table_name)
+            table_column_idx = [column.name for column in self.tables[table_idx].columns].index(column_name)
+            dataset_column_idx = list(dataset.df.columns).index(keyword_name)
             
-            table_name = self.tables[table_idx].name
-            column_name = self.tables[table_idx].columns[table_column_idx].name
-            dataset_column_name = dataset.df.columns[dataset_column_idx]
-
-            print(f"Matched {table_name}.{column_name} to {dataset_column_name}")
+            print(f"Matched {table_name}.{column_name} to {keyword_name}")
 
             df = dfs[table_idx]
             df[column_name] = dataset.df[dataset.df.columns[dataset_column_idx]]
+        
+        for table in self.tables:
+            for column in table.columns:
+                if column.name not in df.columns:
+                    print(f"Column {column.name} in table {table.name} was not matched")
         
         for relationship in self.relationships:
             if relationship.type != RelationshipType.ONE_TO_ONE:
@@ -197,26 +182,6 @@ class ERDiagram:
             (relationship, df) for relationship, df in zip(self.relationships, dfs[len(self.tables):])
         ]
 
-    # def fit_to_dataset(self, dataset):
-    #     res = []
-        
-    #     used_indexes = []
-    #     for table in self.tables:
-    #         df, matches = table.fit_to_dataset(dataset, used_indexes)
-    #         print(matches)
-    #         res.append((table, df))
-
-    #     for relationship in self.relationships:
-    #         if relationship.type != RelationshipType.ONE_TO_ONE:
-    #             raise NotImplementedError("Only one-to-one relationships are supported")
-
-    #         df = pd.DataFrame()
-    #         df[relationship.from_table.name + "_id"] = range(len(dataset.df))
-    #         df[relationship.to_table.name + "_id"] = range(len(dataset.df))
-
-    #         res.append((relationship, df)) 
-
-    #     return res
 
 
 if __name__ == "__main__":
@@ -235,7 +200,7 @@ if __name__ == "__main__":
         name = "table_2",
         columns = [
             Column("acoustics", AttributeType.INTEGER),
-            Column("instruments", AttributeType.INTEGER),
+            Column("dont_match_this_to_anything_plaeas", AttributeType.INTEGER),
         ]
     )
 
@@ -250,6 +215,7 @@ if __name__ == "__main__":
 
     dfs = diagram.fit_to_dataset_gpt(dataset)
     for table, df in dfs:
-        print(table)
-        df.to_csv(f"datasets/{table.name}.csv", index=False)
+        if os.path.exists("gen") == False:
+            os.mkdir("gen")
+        df.to_csv(f"gen/{table.name}.csv", index=False)
         print()
