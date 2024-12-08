@@ -68,6 +68,7 @@ def getDatasetNames(keywords, api):
     return datasets
 
 def chooseBestDataset(datasets, tableCols, api):
+    print(datasets)
     # Ask chatgpt which dataset is the best
     dataset_string = (f"I have found {len(datasets)} datasets that might be relevant. "
                       "Help me choose the best dataset that probably is the most similar with the title."
@@ -97,6 +98,8 @@ def chooseBestDataset(datasets, tableCols, api):
     # Extract the dataset tag from the response
     best_dataset_name = best_dataset.split("&")[0]
     best_dataset_tag = best_dataset.split("&")[-1]
+
+    print(best_dataset_name, "name"), print(best_dataset_tag, "tag")
 
 
    # Specify the name by which the data will be saved
@@ -156,7 +159,6 @@ def getDataset(tableName, tableCols):
 
 
 if __name__ == "__main__":
-    tableName = "boston crime"
-    tableCols = "crime street"
+    tableName = "employees"
+    tableCols = "payment age gender"
     best_dataset = getDataset(tableName, tableCols)
-    print(best_dataset)
