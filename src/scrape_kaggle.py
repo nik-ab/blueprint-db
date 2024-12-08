@@ -1,5 +1,4 @@
 #import kaggle
-from kaggle.api.kaggle_api_extended import KaggleApi
 import os
 from dotenv import load_dotenv
 import openai
@@ -143,6 +142,8 @@ def getDataset(tableName, tableCols):
     kaggle_key = os.getenv("KAGGLE_KEY")
 
     create_kaggle_json(kaggle_username, kaggle_key)
+    import kaggle
+    from kaggle.api.kaggle_api_extended import KaggleApi
     
     # Logging in to Kaggle
     api = KaggleApi()
@@ -152,15 +153,6 @@ def getDataset(tableName, tableCols):
     datasets = getDatasetNames(keywords, api)
     best_dataset = chooseBestDataset(datasets, tableCols, api)
     return best_dataset
-
-# Example usage
-load_dotenv()
-kaggle_username = os.getenv("KAGGLE_USERNAME")
-kaggle_key = os.getenv("KAGGLE_KEY")
-create_kaggle_json(kaggle_username, kaggle_key)
-
-import kaggle
-
 
 tableName = "boston crime "
 tableCols = "crime street"
