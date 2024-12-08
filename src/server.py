@@ -40,7 +40,7 @@ def hello():
 @app.route('/generate', methods=['POST'])
 def generate():
     er_diagram = convertJSONToERDiagram(request.get_json())
-    # generate_data(er_diagram)
+    dfs = generate_data(er_diagram)
 
     # Assuming you have a sample database stored as a pandas DataFrame
     sample_database = [pd.DataFrame({
@@ -53,7 +53,7 @@ def generate():
             'Age': [25, 30, 35, 40, 45, 25, 30, 35, 40, 45, 25, 30, 35, 40, 45, 25, 30, 35, 40, 45],
         })]
     # return sample database
-    return json.dumps([df.to_json() for df in sample_database])
+    return json.dumps([df.to_json() for df in dfs])
 
 
 if __name__ == '__main__':

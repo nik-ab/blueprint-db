@@ -280,6 +280,7 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    user-select: none;
 }
 
 #download-csv, #next-button, #prev-button {
