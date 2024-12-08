@@ -203,7 +203,7 @@ class ERDiagram:
         
         return matches
         
-    def fit_to_dataset_gpt(self, dataset):
+    def fit_to_dataset(self, dataset):
         matches = self.gpt_query(dataset)
         
         dfs = [
@@ -275,7 +275,7 @@ if __name__ == "__main__":
 
     print(diagram.to_sql_schema())
 
-    dfs = diagram.fit_to_dataset_gpt(dataset)
+    dfs = diagram.fit_to_dataset(dataset)
     for table, df in dfs:
         if os.path.exists("gen") == False:
             os.mkdir("gen")
