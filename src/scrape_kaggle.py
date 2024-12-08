@@ -142,6 +142,8 @@ def getDataset(tableName, tableCols):
     kaggle_username = os.getenv("KAGGLE_USERNAME")
     kaggle_key = os.getenv("KAGGLE_KEY")
 
+    create_kaggle_json(kaggle_username, kaggle_key)
+    
     # Logging in to Kaggle
     api = KaggleApi()
     api.authenticate()
