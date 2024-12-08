@@ -30,6 +30,7 @@ class Table:
     def __init__(self, name, columns):
         self.name = name
         self.columns = columns
+        self.df = pd.DataFrame()
 
     def __eq__(self, other):
         return self.name == other.name
@@ -93,19 +94,26 @@ class Table:
     def fit_to_dataset(self, dataset):
         matches = self.gpt_query(dataset)
         
-        df = pd.DataFrame()
-        df[self.name + "_id"] = range(len(dataset.df))
+        self.df[self.name + "_id"] = range(len(dataset.df))
+
+        unmatched = []
 
         for column_name, keyword_name in matches:
             if keyword_name == "UNMATCHED":
                 print(f"Column {column_name} was left unmatched")
+                unmatched.append(column_name)
                 continue
+
+
 
             dataset_column_idx = list(dataset.df.columns).index(keyword_name)
             dataset_column = dataset.df[dataset.df.columns[dataset_column_idx]]
-            df[column_name] = dataset_column        
+            self.df[column_name] = dataset_column  
+            
+            print(f"Matched {column_name} to {keyword_name}")
+            print(dataset_column)      
         
-        return df
+        return unmatched
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
