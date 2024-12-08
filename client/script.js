@@ -556,9 +556,17 @@ const generateButton = document.getElementById("generate-button");
 const modal = document.getElementById("result-modal");
 const tableContainer = document.getElementById("table-inner-container");
 const closeButton = document.getElementById("close-button");
+const nextButton = document.getElementById("next-button");
+const previousButton = document.getElementById("prev-button");
+const tableCounter = document.getElementById("table-counter");
+let prevFn = () => { };
+let nextFn = () => { };
 closeButton.addEventListener("click", closeModal);
 function closeModal() {
     modal.style.display = "none";
+    nextButton.removeEventListener("click", nextFn);
+    previousButton.removeEventListener("click", prevFn);
+
 }
 closeModal();
 function openModal() {
@@ -580,9 +588,31 @@ generateButton.addEventListener("click", () => {
         body: JSON.stringify(requestData)
     })
         .then(response => response.json())
-        .then(data => {
+        .then(jsonData => {
             // Handle the response data
-            console.log(data);
+            console.log("JSON", jsonData);
+            const data = []
+            jsonData.forEach((tableJSON) => {
+                data.push(JSON.parse(tableJSON));
+            });
+            let currentTable = 0;
+            tableCounter.textContent = "1/" + data.length;
+            console.log("DATA", data);
+
+            nextFn = () => {
+                currentTable = (currentTable + 1) % data.length;
+                tableCounter.textContent = (currentTable + 1) + "/" + data.length;
+                tableContainer.innerHTML = '';
+                displayTable(data[currentTable]);
+            };
+            prevFn = () => {
+                currentTable = (currentTable - 1 + data.length) % data.length;
+                tableCounter.textContent = (currentTable + 1) + "/" + data.length;
+                tableContainer.innerHTML = '';
+                displayTable(data[currentTable]);
+            };
+            nextButton.addEventListener("click", nextFn);
+            previousButton.addEventListener("click", prevFn);
 
             openModal();
 
@@ -622,7 +652,6 @@ generateButton.addEventListener("click", () => {
                 table.appendChild(tbody);
 
                 // Append the table to the container
-                tableContainer.innerHTML = ''; // Clear previous content
                 tableContainer.appendChild(table);
             }
             function jsonToCsv(json) {
@@ -654,12 +683,17 @@ generateButton.addEventListener("click", () => {
 
             // Add event listener to the button
             document.getElementById("download-csv").addEventListener("click", () => {
-                const csvContent = jsonToCsv(data); // Convert JSON to CSV
-                downloadCsv("data.csv", csvContent); // Trigger the download
+                data.forEach((table, idx) => {
+                    const csvContent = jsonToCsv(table);
+                    downloadCsv(`table-${idx + 1}.csv`, csvContent);
+                });
             });
 
             // Call the function with the response data
-            displayTable(data);
+
+            tableContainer.innerHTML = ''; // Clear previous content
+            displayTable(data[currentTable]); // Display the first table
+
         })
         .catch(error => {
             // Handle the error
