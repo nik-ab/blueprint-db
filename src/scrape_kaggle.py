@@ -154,6 +154,9 @@ def getDataset(tableName, tableCols):
     best_dataset = chooseBestDataset(datasets, tableCols, api)
     return best_dataset
 
-tableName = "boston crime "
-tableCols = "crime street"
-best_dataset = getDataset(tableName, tableCols)
+
+if __name__ == "__main__":
+    tableName = "boston crime"
+    tableCols = "crime street"
+    best_dataset = getDataset(tableName, tableCols)
+    print(best_dataset)

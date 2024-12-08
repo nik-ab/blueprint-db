@@ -570,6 +570,8 @@ generateButton.addEventListener("click", () => {
     console.log("click")
     console.log(requestData);
 
+    console.log(JSON.stringify(requestData));
+
     fetch("http://localhost:5000/generate", {
         method: "POST",
         headers: {

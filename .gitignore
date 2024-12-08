@@ -3,4 +3,6 @@
 *.bin.gz
 plots/*
 *.pyc
+
 gen/*
+datasets/*

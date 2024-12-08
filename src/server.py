@@ -3,6 +3,7 @@ from flask_cors import CORS
 from er_diagram import *
 import json
 import pandas as pd
+from generate import generate_data
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:8000"}})
@@ -38,10 +39,8 @@ def hello():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    er_diagram = request.get_json()
-    print(er_diagram)
-    converted = convertJSONToERDiagram(er_diagram)
-    print(converted)
+    er_diagram = convertJSONToERDiagram(request.get_json())
+    generate_data(er_diagram)
 
     # Assuming you have a sample database stored as a pandas DataFrame
     sample_database = pd.DataFrame({

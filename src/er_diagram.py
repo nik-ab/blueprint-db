@@ -44,6 +44,68 @@ class Table:
         res += "\n);"
 
         return res
+    
+
+    def gpt_query(self, dataset):
+        keywords = list(dataset.df.columns)
+        # query = "I have a table in a relational schema and it has a bunch of columns\n"
+        # query += "I want to match each column in the table to some keywords\n"
+        # query += "You should give the answer in the following format 'column_name, keyword_name', where each tuple is on a new line\n"
+        # query += "If you don't think a good match exists, you can leave the column unmatched\n"
+        # query += "Please dont add any extra text, as I will be parsing your output\n"
+        # query += "Moreover, each keyword should be matched to at most one column\n"
+        # query += "An example input would be:\n"
+        # query += "Columns: name, profession, location, hobby\n"
+        # query += "Keywords: name, city, job, parents, siblings\n"
+        # query += "An example output to this input would be:\n"
+        # query += "name, name\nprofession, job\nlocation, city\n"
+        # query += "Here, hobby was left unmatched as there was no good match\n"
+        # query += "It is EXTREMELY important that you leave columns unmatched if you think no good match exists\n"
+        # query += "Now I will provide you with the input you should respond to\n"
+        # query += "Columns: " + ", ".join([column.name for column in self.columns]) + "\n"
+        # query += "Keywords: " + ", ".join(keywords) + "\n"
+        
+        query = "Match the names in the columns to the keywords\n"
+        query += "Give the answer in the following format 'column_name, keyword_name', where each tuple is on a new line\n"
+        query += "If you don't think a good match exists, you can leave the column unmatched by providing the tuple 'column_name, UNMATCHED'\n"
+        query += "Please dont add any extra text, as I will be parsing your output\n"
+        query += "Moreover, each keyword should be matched to at most one column\n"
+        query += "An example input would be:\n"
+        query += "Columns: name, profession, location, hobby\n"
+        query += "Keywords: name, city, job, parents, siblings\n"
+        query += "An example output to this input would be:\n"
+        query += "name, name\nprofession, job\nlocation, city\nhobby, UNMATCHED\n"
+        query += "Here, hobby was left unmatched as there was no good match\n"
+        query += "It is EXTREMELY important that you leave columns unmatched if you think no good match exists\n"
+        query += "Now I will provide you with the input you should respond to\n"
+        query += "Columns: " + ", ".join([column.name for column in self.columns]) + "\n"
+        query += "Keywords: " + ", ".join(keywords) + "\n"
+
+        print("Querying GPT-3 with the following prompt:")
+        print(query)
+
+        res = gpt_wrapper.ask_gpt(query)
+        print("GPT-3 response:")
+        print(res)
+
+        return [pairs.split(", ") for pairs in res.split("\n")]
+
+    def fit_to_dataset(self, dataset):
+        matches = self.gpt_query(dataset)
+        
+        df = pd.DataFrame()
+        df[self.name + "_id"] = range(len(dataset.df))
+
+        for column_name, keyword_name in matches:
+            if keyword_name == "UNMATCHED":
+                print(f"Column {column_name} was left unmatched")
+                continue
+
+            dataset_column_idx = list(dataset.df.columns).index(keyword_name)
+            dataset_column = dataset.df[dataset.df.columns[dataset_column_idx]]
+            df[column_name] = dataset_column        
+        
+        return df
 
 class RelationshipType(Enum):
     ONE_TO_ONE = 1
