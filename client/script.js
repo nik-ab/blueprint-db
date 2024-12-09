@@ -576,6 +576,20 @@ function openModal() {
 generateButton.addEventListener("click", () => {
     const requestData = convertToJSON();
 
+    openModal();
+    let dots = ""
+    tableContainer.innerHTML = `<div id = "loading"> Loading${dots}</div>`;
+    interval = setInterval(() => {
+        if (dots.length === 7) {
+            dots = "";
+        }
+        else {
+            dots += ".";
+        }
+        tableContainer.innerHTML = `<div id = "loading"> Loading${dots}</div>`;
+    }, 500);
+    tableCounter.textContent = "0/0";
+    tableName.textContent = "";
 
     fetch("http://localhost:5000/generate", {
         method: "POST",
@@ -586,6 +600,7 @@ generateButton.addEventListener("click", () => {
     })
         .then(response => response.json())
         .then(jsonData => {
+            clearInterval(interval);
             // Handle the response data
             const data = []
             const names = []
@@ -696,7 +711,10 @@ generateButton.addEventListener("click", () => {
 
         })
         .catch(error => {
+            clearInterval(interval);
             // Handle the error
             console.error(error);
+
+            tableContainer.innerHTML = `<div id = "error"> Error: ${error.message}</div>`;
         });
 });

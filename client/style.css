@@ -218,6 +218,36 @@ body {
     padding-bottom: 20px;
     padding-top: 20px;
 }
+#table-inner-container:has(#loading), #table-inner-container:has(#error){
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
+}
+#loading, #error{
+    color: hsl(0, 0%, 90%);
+    font-size: 32px;
+    font-family: 'Roboto Mono', monospace;
+    text-align: center;
+}
+
+#error{
+    color: rgb(204, 147, 147);
+}
+
+@keyframes error-scale {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+#error{
+    animation: error-scale 1s infinite;
+}
 #table-inner-container {
 
     border: 1px solid hsl(223, 13%, 21%);
