@@ -43,11 +43,11 @@ def check_one(relationship, direction):
 
         child_random = no_from_ids
 
-
     if not parents_without_children:
         df = take_out_rows(df, parents_with_children, parent_column)
     if not parents_with_children:
-        df = add_fake_rows(df, parents_without_children, parent_column, child_column, child_random)
+        df = add_fake_rows(df, parents_without_children,
+                           parent_column, child_column, child_random)
     return df
 
 
@@ -115,10 +115,12 @@ def check_many(relationship, direction):
     if not parents_without_children:
         df = take_out_rows(df, parents_with_children, parent_column)
     if not parents_with_children:
-        df = add_fake_rows(df, parents_without_children, parent_column, child_column, child_random)
+        df = add_fake_rows(df, parents_without_children,
+                           parent_column, child_column, child_random)
     if not many_parents:
-        df = add_fake_rows(df, parents_with_children, parent_column, child_column, child_random)
-    
+        df = add_fake_rows(df, parents_with_children,
+                           parent_column, child_column, child_random)
+
     return df
 
 
@@ -144,9 +146,10 @@ def adjust_relationships(diagram):
             relationship.df = check_many(relationship, 1)
         else:
             raise ValueError(f"Unknown relationship type: {tp}")
-        
+
         print("after adjusting relationship", relationship.df)
         print(relationship.df)
+
 
 def add_fake_rows(df, ids, par_col, child_col, child_random):
     # Generate random 10% of ids that were passed
@@ -158,7 +161,8 @@ def add_fake_rows(df, ids, par_col, child_col, child_random):
     print("adding fake rows", ids)
     # Add the rows with these ids in the df with the col
     # Create columns to get fake distribution from get_fake_row
-    tableCols = [{"name": col, "type": df[col].dtype.type} for col in df.columns]
+    tableCols = [{"name": col, "type": df[col].dtype.type}
+                 for col in df.columns]
     fake_rows = get_fake_rows(tableCols, len(ids))
 
     for i in range(len(ids)):
@@ -172,8 +176,9 @@ def add_fake_rows(df, ids, par_col, child_col, child_random):
         new_row[par_col] = id
         new_row[child_col] = random.randint(0, child_random)
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    
+
     return df
+
 
 def take_out_rows(df, ids, col):
     # Generate random 10% of ids that were passed
@@ -184,8 +189,8 @@ def take_out_rows(df, ids, col):
 
     print("taking out rows", ids)
     # Take out the rows with these ids in the df with the col
-    
+
     for id in ids:
         df = df[df[col] != id]
-    
+
     return df

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from er_diagram import *
 import json
 import pandas as pd
+import test_suite
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:8000"}})
@@ -40,9 +41,11 @@ def hello():
 def generate():
     er_diagram = convertJSONToERDiagram(request.get_json())
     er_diagram.populate_with_data()
+    test_suite.adjust_relationships(er_diagram)
 
     # return sample database
-    return json.dumps([[table.df[:1000].to_json(), table.name] for table in er_diagram.tables])
+    return json.dumps([[table.df[:1000].to_json(), table.name] for table in er_diagram.tables] +
+                      [[relationship.df[:1000].to_json(), relationship.name] for relationship in er_diagram.relationships])
 
 
 if __name__ == '__main__':
