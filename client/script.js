@@ -700,7 +700,7 @@ generateButton.addEventListener("click", () => {
             document.getElementById("download-csv").addEventListener("click", () => {
                 data.forEach((table, idx) => {
                     const csvContent = jsonToCsv(table);
-                    downloadCsv(`table-${idx + 1}.csv`, csvContent);
+                    downloadCsv(`${names[idx]}.csv`, csvContent);
                 });
             });
 
