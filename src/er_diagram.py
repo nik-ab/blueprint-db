@@ -5,7 +5,6 @@ import gpt_wrapper
 import os
 import scrape_kaggle
 import fake_data
-import test_suite
 
 
 class AttributeType(Enum):
@@ -35,8 +34,7 @@ class Table:
     def __init__(self, name, columns):
         self.name = name
         self.columns = columns
-        
-        
+
         self.df = pd.DataFrame()
         self.filled = False
 
@@ -58,7 +56,7 @@ class Table:
 
     def gpt_query(self, dataset_columns):
         keywords = list(dataset_columns)
-        
+
         query = "Match the names in the columns to the keywords\n"
         query += "Give the answer in the following format 'column_name, keyword_name', where each tuple is on a new line\n"
         query += "If you don't think a good match exists, you can leave the column unmatched by providing the tuple 'column_name, UNMATCHED'\n"
@@ -85,7 +83,8 @@ class Table:
 
     def add_fake_data(self, column_name):
         print(f"Generating fake data for column {column_name}")
-        data = fake_data.get_fake_col(self.name + "." + column_name, len(self.df))
+        data = fake_data.get_fake_col(
+            self.name + "." + column_name, len(self.df))
         self.df[column_name] = data
 
     def fill_df(self, matches, dataset):
@@ -95,20 +94,22 @@ class Table:
             if keyword_name == "UNMATCHED":
                 self.add_fake_data(column_name)
             else:
-                dataset_column_idx = list(dataset.df.columns).index(keyword_name)
+                dataset_column_idx = list(
+                    dataset.df.columns).index(keyword_name)
                 dataset_column = dataset.df[dataset.df.columns[dataset_column_idx]]
-                self.df[column_name] = dataset_column  
-                
+                self.df[column_name] = dataset_column
+
                 print(f"Matched {column_name} to {keyword_name}")
                 print(dataset_column)
-        
+
         self.filled = True
 
     def fit_to_dataset(self, dataset):
         matches = self.gpt_query(dataset.df.columns)
         self.fill_df(matches, dataset)
 
-        unused_columns = [column for column in dataset.df.columns if column not in [match[1] for match in matches]]
+        unused_columns = [column for column in dataset.df.columns if column not in [
+            match[1] for match in matches]]
         return unused_columns
 
     def fit_to_dataset_if_good(self, dataset, unused_columns):
@@ -120,7 +121,7 @@ class Table:
         self.fill_df(matches, dataset)
         unused_columns = [
             column for column in unused_columns if column not in [match[1] for match in matches]]
-        
+
         return True, unused_columns
 
 
@@ -132,14 +133,15 @@ class RelationshipType(Enum):
 
 
 class Relationship:
-    def __init__(self, name, from_table, to_table, type, cols = []):
+    def __init__(self, name, from_table, to_table, type, cols=[]):
         self.name = name
 
         self.from_table = from_table
         self.to_table = to_table
 
         self.type = type
-        self.df = pd.DataFrame(columns=[self.from_table.name + "_id", self.to_table.name + "_id"] + cols)
+        self.df = pd.DataFrame(
+            columns=[self.from_table.name + "_id", self.to_table.name + "_id"] + cols)
 
     def __str__(self):
         return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name})"
@@ -157,11 +159,11 @@ class Relationship:
         res += ");"
 
         return res
-    
+
     def fill_trivially(self, size):
         self.df[self.from_table.name + "_id"] = range(size)
         self.df[self.to_table.name + "_id"] = range(size)
-        
+
 
 class ERDiagram:
     def __init__(self, name, tables, relationships):
@@ -203,7 +205,7 @@ class ERDiagram:
                 table.name, ", ".join([column.name for column in table.columns]))
             print("Dataset found: ", dataset_name)
             dataset = load_dataset(dataset_name, f"../datasets/{dataset_name}")
-            
+
             unused_columns = table.fit_to_dataset(dataset)
 
             for relation in self.relationships:
@@ -214,7 +216,8 @@ class ERDiagram:
                 other_table = relation.to_table if relation.from_table == table else relation.from_table
                 if other_table.filled:
                     continue
-                fill_res, new_unused = other_table.fit_to_dataset_if_good(dataset, unused_columns)
+                fill_res, new_unused = other_table.fit_to_dataset_if_good(
+                    dataset, unused_columns)
                 if not fill_res:
                     print(f"Failed to fit table {other_table.name} to dataset")
                     break
@@ -223,45 +226,46 @@ class ERDiagram:
                 unused_columns = new_unused
                 relation.fill_trivially(len(dataset.df))
                 break
-        
-        test_suite.adjust_relationships(self)
 
     def save_to_csv(self):
         if not os.path.exists(f"../gen/{self.name}"):
             os.makedirs(f"../gen/{self.name}")
 
         for table in self.tables:
-            table.df.to_csv(f"../gen/{self.name}/{table.name}.csv", index=False)
+            table.df.to_csv(
+                f"../gen/{self.name}/{table.name}.csv", index=False)
 
         for relationship in self.relationships:
-            relationship.df.to_csv(f"../gen/{self.name}/{relationship.name}.csv", index=False)
+            relationship.df.to_csv(
+                f"../gen/{self.name}/{relationship.name}.csv", index=False)
+
 
 if __name__ == "__main__":
     table1 = Table(
-        name = "Country",
-        columns = [
+        name="Country",
+        columns=[
             Column("name", AttributeType.STRING),
             Column("population", AttributeType.INTEGER),
         ]
     )
     table2 = Table(
-        name = "Capital",
-        columns = [
+        name="Capital",
+        columns=[
             Column("capital", AttributeType.STRING),
-            ]
+        ]
     )
 
     relationship1 = Relationship(
-        name = "CountryCapital",
-        from_table = table1,
-        to_table = table2,
-        type = RelationshipType.ONE_TO_ONE
+        name="CountryCapital",
+        from_table=table1,
+        to_table=table2,
+        type=RelationshipType.ONE_TO_ONE
     )
 
     diag1 = ERDiagram(
         "diag1",
-        tables = [table1, table2],
-        relationships = [relationship1]
+        tables=[table1, table2],
+        relationships=[relationship1]
     )
 
     diag1.populate_with_data()
