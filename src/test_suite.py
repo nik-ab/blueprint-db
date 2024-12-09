@@ -1,7 +1,7 @@
 import pandas as pd
-from er_diagram import *
+from er_diagram import RelationshipType
 import random
-from fake_data import *
+from fake_data import get_fake_rows
 
 
 def check_one(relationship, direction):
@@ -31,16 +31,24 @@ def check_one(relationship, direction):
     if direction == 0:
         parents_without_children = from_set - from_ids
         parents_with_children = from_ids
-        generate_column = relationship.to_table.name + "_id"
+        parent_column = relationship.from_table.name + "_id"
+        child_column = relationship.to_table.name + "_id"
+
+        child_random = no_to_ids
     else:
         parents_without_children = to_set - from_ids
         parents_with_children = to_ids
-        generate_column = relationship.from_table.name + "_id"
+        parent_column = relationship.to_table.name + "_id"
+        child_column = relationship.from_table.name + "_id"
+
+        child_random = no_from_ids
+
 
     if not parents_without_children:
-        take_out_rows(df, parents_with_children, generate_column)
+        df = take_out_rows(df, parents_with_children, parent_column)
     if not parents_with_children:
-        add_fake_rows(df, parents_without_children, generate_column)
+        df = add_fake_rows(df, parents_without_children, parent_column, child_column, child_random)
+    return df
 
 
 def check_many(relationship, direction):
@@ -89,53 +97,67 @@ def check_many(relationship, direction):
         many_parents = to_ids - to_with_one_child - parents_without_children
 
     if not parents_without_children:
-        take_out_rows(df, parents_with_children, generate_column)
+        df = take_out_rows(df, parents_with_children, generate_column)
     if not parents_with_children:
-        add_fake_rows(df, parents_without_children, generate_column)
+        df = add_fake_rows(df, parents_without_children, generate_column)
     if not many_parents:
-        add_fake_rows(df, parents_with_children, generate_column)
+        df = add_fake_rows(df, parents_with_children, generate_column)
+    
+    return df
 
 
 def adjust_relationships(diagram):
     for relationship in diagram.relationships:
+        print("before adjusting relationship")
+        print(relationship.df)
+        print("relationship type", relationship.type)
+        print()
         tp = relationship.type
-
-        if tp == RelationshipType.ONE_TO_ONE:
-            check_one(relationship.df, 0)
-        elif tp == RelationshipType.ONE_TO_MANY:
-            check_one(relationship.df, 0)
-            check_many(relationship.df, 0)
-        elif tp == RelationshipType.MANY_TO_ONE:
-            check_one(relationship.df, 1)
-            check_many(relationship.df, 1)
-        elif tp == RelationshipType.MANY_TO_MANY:
-            check_one(relationship.df, 0)
-            check_many(relationship.df, 0)
-            check_one(relationship.df, 1)
-            check_many(relationship.df, 1)
+        if tp.value == 1:
+            relationship.df = check_one(relationship, 0)
+        elif tp.value == 2:
+            relationship.df = check_one(relationship, 0)
+            relationship.df = check_many(relationship, 0)
+        elif tp.value == 3:
+            relationship.df = check_one(relationship, 1)
+            relationship.df = check_many(relationship, 1)
+        elif tp.value == 4:
+            relationship.df = check_one(relationship, 0)
+            relationship.df = check_many(relationship, 0)
+            relationship.df = check_one(relationship, 1)
+            relationship.df = check_many(relationship, 1)
         else:
             raise ValueError(f"Unknown relationship type: {tp}")
+        
+        print("after adjusting relationship", relationship.df)
+        print(relationship.df)
 
-def add_fake_rows(df, ids, col):
+def add_fake_rows(df, ids, par_col, child_col, child_random):
     # Generate random 10% of ids that were passed
     ids = list(ids)
     no_take_out = len(ids) // 10 if len(ids) // 10 != 0 else 1
     random.shuffle(ids)
     ids = ids[:no_take_out]
 
+    print("adding fake rows", ids)
     # Add the rows with these ids in the df with the col
-    for id in ids:
-        # Create columns to get fake distribution from get_fake_row
-        tableCols = [{"name": col, "type": df[col].dtype.type} for col in df.columns]
-        fake_row = get_fake_row(tableCols)
+    # Create columns to get fake distribution from get_fake_row
+    tableCols = [{"name": col, "type": df[col].dtype.type} for col in df.columns]
+    fake_rows = get_fake_rows(tableCols, len(ids))
 
+    for i in range(len(ids)):
+        id = ids[i]
+        fake_row = fake_rows[i]
         new_row = {}
         # Go over the fake row and tableCols and append the fake data according to the fake row
         for i in range(len(fake_row)):
             col_name = tableCols[i]["name"]
             new_row[col_name] = fake_row[i]
-        new_row[col] = id
+        new_row[par_col] = id
+        new_row[child_col] = random.randint(0, child_random)
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    
+    return df
 
 def take_out_rows(df, ids, col):
     # Generate random 10% of ids that were passed
@@ -144,6 +166,10 @@ def take_out_rows(df, ids, col):
     random.shuffle(ids)
     ids = ids[:no_take_out]
 
+    print("taking out rows", ids)
     # Take out the rows with these ids in the df with the col
+    
     for id in ids:
         df = df[df[col] != id]
+    
+    return df
