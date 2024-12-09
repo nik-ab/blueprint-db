@@ -111,14 +111,15 @@ class RelationshipType(Enum):
     MANY_TO_MANY = 4
 
 class Relationship:
-    def __init__(self, name, from_table, to_table, type):
+    def __init__(self, name, from_table, to_table, type, cols = []):
         self.name = name
 
         self.from_table = from_table
         self.to_table = to_table
 
         self.type = type
-        self.df = pd.DataFrame()
+        columns = ['id_0', 'id_1'] + cols
+        self.df = pd.DataFrame(columns=columns)
 
     def __str__(self):
         return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name})"
