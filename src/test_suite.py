@@ -70,7 +70,6 @@ def check_many(relationship, direction):
     from_ids = set(df[relationship.from_table.name + "_id"])
     to_ids = set(df[relationship.to_table.name + "_id"])
 
-
     if direction == 0:
         parents_with_children = from_ids
         to_add = from_set
@@ -118,8 +117,8 @@ def check_many(relationship, direction):
         df = add_fake_rows(df, parents_without_children,
                            parent_column, child_column, child_random)
     if not many_parents:
-        df = add_fake_rows(df, parents_with_children,
-                           parent_column, child_column, child_random)
+        df = add_fake_rows(df, parents_without_children,
+                           parent_column, child_column, child_random, 1)
 
     return df
 
@@ -151,7 +150,7 @@ def adjust_relationships(diagram):
         print(relationship.df)
 
 
-def add_fake_rows(df, ids, par_col, child_col, child_random):
+def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
     # Generate random 10% of ids that were passed
     ids = list(ids)
     no_take_out = len(ids) // 10 if len(ids) // 10 != 0 else 1
@@ -176,6 +175,15 @@ def add_fake_rows(df, ids, par_col, child_col, child_random):
         new_row[par_col] = id
         new_row[child_col] = random.randint(0, child_random)
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        if many:
+            new_row = {}
+            for i in range(len(fake_row)):
+                col_name = tableCols[i]["name"]
+                new_row[col_name] = fake_row[i]
+            new_row[par_col] = id
+            new_row[child_col] = random.randint(0, child_random)
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
     return df
 
