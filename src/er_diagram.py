@@ -115,9 +115,12 @@ class Table:
         unmatched_cnt = len([x for x in matches if x[1] == "UNMATCHED"])
         match_ratio = (len(matches) - unmatched_cnt) / len(matches)
         if match_ratio < 0.5:
-            return False
+            return False, []
         self.fill_df(matches, dataset)
-        return True
+        unused_columns = [
+            column for column in unused_columns if column not in [match[1] for match in matches]]
+        
+        return True, unused_columns
 
 
 class RelationshipType(Enum):
@@ -204,17 +207,20 @@ class ERDiagram:
             unused_columns = table.fit_to_dataset(dataset)
 
             for relation in self.relationships:
+                if len(unused_columns) == 0:
+                    break
                 if relation.type != RelationshipType.ONE_TO_ONE:
                     continue
                 other_table = relation.to_table if relation.from_table == table else relation.from_table
                 if other_table.filled:
                     continue
-                fill_res = other_table.fit_to_dataset_if_good(dataset, unused_columns)
+                fill_res, new_unused = other_table.fit_to_dataset_if_good(dataset, unused_columns)
                 if not fill_res:
                     print(f"Failed to fit table {other_table.name} to dataset")
                     break
                 print(f"Successfully fit table {other_table.name} to dataset")
 
+                unused_columns = new_unused
                 relation.fill_trivially(len(dataset.df))
                 break
 
