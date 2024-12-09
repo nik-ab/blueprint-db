@@ -59,10 +59,6 @@ def getDatasetNames(keywords, api):
     # Query the Kaggle API for datasets with the given keywords
     datasets = set()
 
-    # Logging in to Kaggle
-    # api = KaggleApi()
-    # api.authenticate()
-
     for keyword in keywords:
         all_datasets = api.dataset_list(search=keyword)
         for dataset in all_datasets:
