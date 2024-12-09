@@ -7,15 +7,6 @@ import json
 import random
 
 
-import kaggle
-from kaggle.api.kaggle_api_extended import KaggleApi
-import os
-from dotenv import load_dotenv
-import openai
-import json
-import random
-
-
 def get_fake_column(name, type):
     '''
     Returns a fake column distrbution if it is int or float
