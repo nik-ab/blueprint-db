@@ -177,14 +177,16 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
         if many:
-            new_row = {}
-            for i in range(len(fake_row)):
-                col_name = tableCols[i]["name"]
-                new_row[col_name] = fake_row[i]
-            new_row[par_col] = id
-            new_row[child_col] = random.randint(0, child_random)
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-
+            # Choose a random number of children to add
+            no_children = random.randint(1, 5)
+            for i in range(no_children):
+                new_row = {}
+                for i in range(len(fake_row)):
+                    col_name = tableCols[i]["name"]
+                    new_row[col_name] = fake_row[i]
+                new_row[par_col] = id
+                new_row[child_col] = random.randint(0, child_random)
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 
 
