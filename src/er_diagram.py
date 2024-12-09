@@ -118,6 +118,7 @@ class Relationship:
         self.to_table = to_table
 
         self.type = type
+        self.df = pd.DataFrame()
 
     def __str__(self):
         return f"{self.name} ({self.from_table.name} to {self.to_table.name}, {self.type.name})"

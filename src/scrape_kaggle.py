@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 import openai
 import json
+import shutil
+
 
 def create_kaggle_json(kaggle_username, kaggle_key):
     if not kaggle_username or not kaggle_key:
@@ -102,33 +104,46 @@ def chooseBestDataset(datasets, tableCols, api):
     print(best_dataset_name, "name"), print(best_dataset_tag, "tag")
 
 
-   # Specify the name by which the data will be saved
+    # Specify the name by which the data will be saved
     download_path = "../datasets/temp_download/"
+    final_save_path = "../datasets/"
     os.makedirs(download_path, exist_ok=True)
+    os.makedirs(final_save_path, exist_ok=True)
 
-    # Logging in to Kaggle
-    # api = KaggleApi()
-    # api.authenticate()
+    new_file_path = None  # Initialize as None to return if no CSV is found
 
-    # Download the dataset to a temporary folder
-    api.dataset_download_files(best_dataset_tag, path=download_path, unzip=True)
+    try:
+        # Download the dataset to a temporary folder
+        api.dataset_download_files(best_dataset_tag, path=download_path, unzip=True)
 
-    # Rename and move the file(s) to the desired location
-    final_save_path = f"../datasets/"
+        # Move the first found CSV file to the desired location
+        csv_file_found = False
+        for file in os.listdir(download_path):
+            temp_file_path = os.path.join(download_path, file)
+            if os.path.isfile(temp_file_path) and file.endswith(".csv"):
+                new_file_path = os.path.join(final_save_path, f"{best_dataset_name}.csv")
+                os.rename(temp_file_path, new_file_path)
+                csv_file_found = True
+                print(f"CSV file saved as: {new_file_path}")
+                break  # Stop after moving the first CSV file
 
-    for file in os.listdir(download_path):
-        temp_file_path = os.path.join(download_path, file)
-        if os.path.isfile(temp_file_path) and file.endswith(".csv"):
-            new_file_path = os.path.join(final_save_path, f"{best_dataset_name}.csv")
-            os.rename(temp_file_path, new_file_path)
+        if not csv_file_found:
+            print("No CSV file found in the selected dataset.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        # Ensure the temporary download folder is cleaned up
+        for file in os.listdir(download_path):
+            temp_file_path = os.path.join(download_path, file)
+            if os.path.isfile(temp_file_path):
+                os.remove(temp_file_path)
+        try:
+            shutil.rmtree(download_path)
+            print(f"Temporary folder {download_path} removed successfully.")
+        except Exception as e:
+            print(f"Failed to remove temporary folder {download_path}: {e}")
 
-    # Clean up the temporary download folder
-    for file in os.listdir(download_path):
-        temp_file_path = os.path.join(download_path, file)
-        if os.path.isfile(temp_file_path):
-            os.remove(temp_file_path)
-    os.rmdir(download_path)
-    return best_dataset_name
+        return new_file_path
 
 
 def getDataset(tableName, tableCols):
@@ -159,6 +174,6 @@ def getDataset(tableName, tableCols):
 
 
 if __name__ == "__main__":
-    tableName = "employees"
-    tableCols = "payment age gender"
+    tableName = "math problems"
+    tableCols = "problem solution year"
     best_dataset = getDataset(tableName, tableCols)
