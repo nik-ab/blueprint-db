@@ -4,37 +4,42 @@ from dataset import load_dataset
 import os
 import fake_data
 
+
 def generate_data(er_diagram):
 
     print("Generating data corresponding to the ER Diagram")
     print(er_diagram)
 
-    os.makedirs(f"../gen/{er_diagram.name}", exist_ok=True)    
+    os.makedirs(f"../gen/{er_diagram.name}", exist_ok=True)
+
+    dfs = []
 
     for table in er_diagram.tables:
         print("Scraping Kaggle for table: ", table)
 
         dataset_name = scrape_kaggle.getDataset(
-        table.name,
-        ", ".join([column.name for column in table.columns])
+            table.name,
+            ", ".join([column.name for column in table.columns])
         )
 
         print("Dataset found: ", dataset_name)
         dataset = load_dataset(dataset_name, f"../datasets/{dataset_name}.csv")
-
 
         print(f"Fitting table {table.name} to dataset")
         unmatched = table.fit_to_dataset(dataset)
 
         print("Matched ones: ", table.df.columns)
 
-
         for col_name in unmatched:
             print(f"Generating fake data for column {col_name}")
-            data = fake_data.get_fake_col(col_name, len(dataset.df))
+            data = fake_data.get_fake_col(
+                table.name + "." + col_name, len(dataset.df))
             table.df[col_name] = data
 
-        table.df.to_csv(f"../gen/{er_diagram.name}/{table.name}.csv", index=False)
+        dfs.append(table)
+        table.df.to_csv(
+            f"../gen/{er_diagram.name}/{table.name}.csv", index=False)
+    return dfs
 
 
 # def generate_data_alternate(er_diagram):
@@ -42,7 +47,7 @@ def generate_data(er_diagram):
 #     print("Generating data corresponding to the ER Diagram")
 #     print(er_diagram)
 
-#     os.makedirs(f"../gen/{er_diagram.name}", exist_ok=True)    
+#     os.makedirs(f"../gen/{er_diagram.name}", exist_ok=True)
 
 
 #     columns = ""
@@ -62,32 +67,27 @@ def generate_data(er_diagram):
 #         df.to_csv(f"../gen/{er_diagram.name}/{table.name}.csv", index=False)
 
 
-
 if __name__ == "__main__":
     table1 = er_diagram.Table(
-        name = "city",
-        columns = [
+        name="city",
+        columns=[
             er_diagram.Column("name", er_diagram.AttributeType.STRING),
-            er_diagram.Column("average rent", er_diagram.AttributeType.INTEGER),
-            ]
+            er_diagram.Column(
+                "average rent", er_diagram.AttributeType.INTEGER),
+        ]
     )
     table2 = er_diagram.Table(
-        name = "vacations",
-        columns = [
+        name="vacations",
+        columns=[
             er_diagram.Column("location", er_diagram.AttributeType.STRING),
             er_diagram.Column("price", er_diagram.AttributeType.INTEGER),
-            ]
+        ]
     )
 
     diag1 = er_diagram.ERDiagram(
         "diag1",
-        tables = [table1],
-        relationships = []
+        tables=[table1],
+        relationships=[]
     )
 
     generate_data(diag1)
-
-
-
-
-

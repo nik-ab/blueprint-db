@@ -555,6 +555,7 @@ const addDragAndDrop = (element) => {
 const generateButton = document.getElementById("generate-button");
 const modal = document.getElementById("result-modal");
 const tableContainer = document.getElementById("table-inner-container");
+const tableName = document.getElementById("table-name");
 const closeButton = document.getElementById("close-button");
 const nextButton = document.getElementById("next-button");
 const previousButton = document.getElementById("prev-button");
@@ -575,10 +576,6 @@ function openModal() {
 generateButton.addEventListener("click", () => {
     const requestData = convertToJSON();
 
-    console.log("click")
-    console.log(requestData);
-
-    console.log(JSON.stringify(requestData));
 
     fetch("http://localhost:5000/generate", {
         method: "POST",
@@ -590,24 +587,27 @@ generateButton.addEventListener("click", () => {
         .then(response => response.json())
         .then(jsonData => {
             // Handle the response data
-            console.log("JSON", jsonData);
             const data = []
+            const names = []
             jsonData.forEach((tableJSON) => {
-                data.push(JSON.parse(tableJSON));
+                data.push(JSON.parse(tableJSON[0]));
+                names.push(tableJSON[1]);
             });
             let currentTable = 0;
             tableCounter.textContent = "1/" + data.length;
-            console.log("DATA", data);
+            tableName.textContent = names[currentTable];
 
             nextFn = () => {
                 currentTable = (currentTable + 1) % data.length;
                 tableCounter.textContent = (currentTable + 1) + "/" + data.length;
+                tableName.textContent = names[currentTable];
                 tableContainer.innerHTML = '';
                 displayTable(data[currentTable]);
             };
             prevFn = () => {
                 currentTable = (currentTable - 1 + data.length) % data.length;
                 tableCounter.textContent = (currentTable + 1) + "/" + data.length;
+                tableName.textContent = names[currentTable];
                 tableContainer.innerHTML = '';
                 displayTable(data[currentTable]);
             };
