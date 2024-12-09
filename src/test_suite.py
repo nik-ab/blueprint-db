@@ -2,35 +2,34 @@ import pandas as pd
 from src.dataset import Diagram, Table, Relationship, RelationshipType
 
 
-def check_one_to_one():
+def check_one(df, direction):
+    '''
+    df is the table that represents the relationship between the two tables
+    it has id_0, id_1, representing the rows in the subsequent from_table and to_table 
+    other columns 
+    '''
+
+def check_many(df, direction):
     pass
 
 
 def adjust_relationships(diagram, dfs, get_fake_row):
-     # Get table and relationship data
-    from_table_df = table_dfs[relationship.from_table.name]
-    to_table_df = table_dfs[relationship.to_table.name]
-    relationship_df = relationship_dfs.get(relationship.name, pd.DataFrame())
-
-    # Figure out if there are parents with no children
-    parent_ids = set(from_table_df[relationship.from_table.name + "_id"])
-    children_ids = set(relationship_df[relationship.to_table.name + "_id"])
-    parents_without_children = parent_ids - children_ids
-
     for relationship in diagram.relationhsips:
         tp = relationship.type
 
         if tp == RelationshipType.ONE_TO_ONE:
-            # Count if 1-1 and 1-0 are both represented
-            from_table_df = table_dfs[relationship.from_table.name]
-            to_table_df = table_dfs[relationship.to_table.name]
-            relationship_df = relationship_dfs.get(relationship.name, pd.DataFrame())
+            check_one(relationship.df, 0)
         elif tp == RelationshipType.ONE_TO_MANY:
-            pass
+            check_one(relationship.df, 0)
+            check_many(relationship.df, 0)
         elif tp == RelationshipType.MANY_TO_ONE:
-            pass
+            check_one(relationship.df, 1)
+            check_many(relationship.df, 1)
         elif tp == RelationshipType.MANY_TO_MANY:
-            pass
+            check_one(relationship.df, 0)
+            check_many(relationship.df, 0)
+            check_one(relationship.df, 1)
+            check_many(relationship.df, 1)
         else:
             raise ValueError(f"Unknown relationship type: {tp}")
 
