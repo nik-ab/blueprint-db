@@ -5,6 +5,7 @@ import gpt_wrapper
 import os
 import scrape_kaggle
 import fake_data
+import test_suite
 
 
 class AttributeType(Enum):
@@ -223,6 +224,8 @@ class ERDiagram:
                 unused_columns = new_unused
                 relation.fill_trivially(len(dataset.df))
                 break
+        
+        test_suite.adjust_relationships(self)
 
     def save_to_csv(self):
         if not os.path.exists(f"../gen/{self.name}"):

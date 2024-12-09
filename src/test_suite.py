@@ -1,7 +1,7 @@
 import pandas as pd
-from src.dataset import Diagram, Table, Relationship, RelationshipType
+from er_diagram import *
 import random
-from src.fake_data import get_fake_row
+from fake_data import *
 
 
 def check_one(relationship, direction):
@@ -97,7 +97,7 @@ def check_many(relationship, direction):
 
 
 def adjust_relationships(diagram):
-    for relationship in diagram.relationhsips:
+    for relationship in diagram.relationships:
         tp = relationship.type
 
         if tp == RelationshipType.ONE_TO_ONE:
