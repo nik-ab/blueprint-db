@@ -85,23 +85,31 @@ def check_many(relationship, direction):
     if direction == 0:
         parents_without_children = from_set - from_ids
         parents_with_children = from_ids
-        generate_column = relationship.to_table.name + "_id"
+        parent_column = relationship.from_table.name + "_id"
+        child_column = relationship.to_table.name + "_id"
+
+        child_random = no_to_ids
 
         many_parents = from_ids - from_with_one_child - parents_without_children
 
     else:
         parents_without_children = to_set - from_ids
         parents_with_children = to_ids
-        generate_column = relationship.from_table.name + "_id"
+        parent_column = relationship.to_table.name + "_id"
+        child_column = relationship.from_table.name + "_id"
+
+        child_random = no_from_ids
 
         many_parents = to_ids - to_with_one_child - parents_without_children
 
     if not parents_without_children:
-        df = take_out_rows(df, parents_with_children, generate_column)
+        df = take_out_rows(df, parents_with_children, parent_column)
     if not parents_with_children:
-        df = add_fake_rows(df, parents_without_children, generate_column)
+        df = add_fake_rows(df, parents_without_children,
+                           parent_column, child_column, child_random)
     if not many_parents:
-        df = add_fake_rows(df, parents_with_children, generate_column)
+        df = add_fake_rows(df, parents_with_children,
+                           parent_column, child_column, child_random)
 
     return df
 
