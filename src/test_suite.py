@@ -1,6 +1,45 @@
 import pandas as pd
 from src.dataset import Diagram, Table, Relationship, RelationshipType
 
+
+def check_one_to_one():
+    pass
+
+
+def adjust_relationships(diagram, dfs, get_fake_row):
+     # Get table and relationship data
+    from_table_df = table_dfs[relationship.from_table.name]
+    to_table_df = table_dfs[relationship.to_table.name]
+    relationship_df = relationship_dfs.get(relationship.name, pd.DataFrame())
+
+    # Figure out if there are parents with no children
+    parent_ids = set(from_table_df[relationship.from_table.name + "_id"])
+    children_ids = set(relationship_df[relationship.to_table.name + "_id"])
+    parents_without_children = parent_ids - children_ids
+
+    for relationship in diagram.relationhsips:
+        tp = relationship.type
+
+        if tp == RelationshipType.ONE_TO_ONE:
+            # Count if 1-1 and 1-0 are both represented
+            from_table_df = table_dfs[relationship.from_table.name]
+            to_table_df = table_dfs[relationship.to_table.name]
+            relationship_df = relationship_dfs.get(relationship.name, pd.DataFrame())
+        elif tp == RelationshipType.ONE_TO_MANY:
+            pass
+        elif tp == RelationshipType.MANY_TO_ONE:
+            pass
+        elif tp == RelationshipType.MANY_TO_MANY:
+            pass
+        else:
+            raise ValueError(f"Unknown relationship type: {tp}")
+
+def add_fake_rows(diagram, dfs, get_fake_row):
+    pass
+
+def take_out_rows(diagram, dfs):
+    pass
+
 def adjust_1_to_n_relationships(diagram, dfs, get_fake_row):
     """
     Adjusts rows in tables and relationships to ensure all 1-to-N relationships are properly represented.
