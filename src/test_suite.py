@@ -70,6 +70,21 @@ def check_many(relationship, direction):
     from_ids = set(df[relationship.from_table.name + "_id"])
     to_ids = set(df[relationship.to_table.name + "_id"])
 
+
+    if direction == 0:
+        parents_with_children = from_ids
+        to_add = from_set
+        parent_column = relationship.from_table.name + "_id"
+    else:
+        parents_without_children = to_ids
+        to_add = to_set
+        parent_column = relationship.to_table.name + "_id"
+
+    if not parents_with_children:
+        df = add_fake_rows(df, to_add, parent_column, child_column, child_random)
+        from_ids = set(df[relationship.from_table.name + "_id"])
+        to_ids = set(df[relationship.to_table.name + "_id"])
+    
     # Check parents with exactly one child
     # Figure out if there are parents with 1 child
     from_with_one_child = set()
@@ -87,19 +102,14 @@ def check_many(relationship, direction):
         parents_with_children = from_ids
         parent_column = relationship.from_table.name + "_id"
         child_column = relationship.to_table.name + "_id"
-
         child_random = no_to_ids
-
         many_parents = from_ids - from_with_one_child - parents_without_children
-
     else:
         parents_without_children = to_set - from_ids
         parents_with_children = to_ids
         parent_column = relationship.to_table.name + "_id"
         child_column = relationship.from_table.name + "_id"
-
         child_random = no_from_ids
-
         many_parents = to_ids - to_with_one_child - parents_without_children
 
     if not parents_without_children:
