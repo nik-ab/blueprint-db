@@ -153,7 +153,7 @@ def adjust_relationships(diagram):
 def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
     # Generate random 10% of ids that were passed
     ids = list(ids)
-    no_take_out = len(ids) // 10 if len(ids) // 10 != 0 else 1
+    no_take_out = len(ids) // 20 if len(ids) // 20 != 0 else 1
     random.shuffle(ids)
     ids = ids[:no_take_out]
 
@@ -183,27 +183,27 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
         child_set.add(new_row[child_col])
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
-        if many:
-            # Choose a random number of children to add
-            no_children = random.randint(1, 5)
-            for i in range(no_children):
-                new_row = {}
-                for i in range(len(fake_row)):
-                    col_name = tableCols[i]["name"]
-                    new_row[col_name] = fake_row[i]
-                new_row[par_col] = id
-                new_row[child_col] = random.randint(0, child_random)
-                while new_row[child_col] in child_set:
-                    new_row[child_col] = random.randint(0, child_random)
-                child_set.add(new_row[child_col])
-                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        # if many:
+        #     # Choose a random number of children to add
+        #     no_children = random.randint(1, 3)
+        #     for i in range(no_children):
+        #         new_row = {}
+        #         for i in range(len(fake_row)):
+        #             col_name = tableCols[i]["name"]
+        #             new_row[col_name] = fake_row[i]
+        #         new_row[par_col] = id
+        #         new_row[child_col] = random.randint(0, child_random)
+        #         while new_row[child_col] in child_set:
+        #             new_row[child_col] = random.randint(0, child_random)
+        #         child_set.add(new_row[child_col])
+        #         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 
 
 def take_out_rows(df, ids, col):
     # Generate random 10% of ids that were passed
     ids = list(ids)
-    no_take_out = len(ids) // 10 if len(ids) // 10 != 0 else 1
+    no_take_out = len(ids) // 20 if len(ids) // 20 != 0 else 1
     random.shuffle(ids)
     ids = ids[:no_take_out]
 
