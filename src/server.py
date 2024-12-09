@@ -3,7 +3,6 @@ from flask_cors import CORS
 from er_diagram import *
 import json
 import pandas as pd
-from generate import generate_data
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:8000"}})
@@ -40,20 +39,10 @@ def hello():
 @app.route('/generate', methods=['POST'])
 def generate():
     er_diagram = convertJSONToERDiagram(request.get_json())
-    tables = generate_data(er_diagram)
+    er_diagram.populate_with_data()
 
-    # Assuming you have a sample database stored as a pandas DataFrame
-    sample_database = [pd.DataFrame({
-        'Name': ['John', 'Jane', 'Mike'],
-        'Age': [25, 30, 35],
-        'City': ['New York', 'London', 'Paris']
-    }),
-        pd.DataFrame({
-            'Name': ['John', 'Jane', 'Mike', 'Alice', 'Bob', 'John', 'Jane', 'Mike', 'Alice', 'Bob', 'John', 'Jane', 'Mike', 'Alice', 'Bob', 'John', 'Jane', 'Mike', 'Alice', 'Bob'],
-            'Age': [25, 30, 35, 40, 45, 25, 30, 35, 40, 45, 25, 30, 35, 40, 45, 25, 30, 35, 40, 45],
-        })]
     # return sample database
-    return json.dumps([[table.df.to_json(), table.name] for table in tables])
+    return json.dumps([[table.df[:1000].to_json(), table.name] for table in er_diagram.tables])
 
 
 if __name__ == '__main__':
