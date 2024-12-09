@@ -164,6 +164,8 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
                  for col in df.columns]
     fake_rows = get_fake_rows(tableCols, len(ids))
 
+    child_set = set()
+
     for i in range(len(ids)):
         id = ids[i]
         fake_row = fake_rows[i]
@@ -173,7 +175,12 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
             col_name = tableCols[i]["name"]
             new_row[col_name] = fake_row[i]
         new_row[par_col] = id
+
+        # Generate a random number for the child column until it is unique
         new_row[child_col] = random.randint(0, child_random)
+        while new_row[child_col] in child_set:
+            new_row[child_col] = random.randint(0, child_random)
+        child_set.add(new_row[child_col])
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
         if many:
@@ -186,6 +193,9 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
                     new_row[col_name] = fake_row[i]
                 new_row[par_col] = id
                 new_row[child_col] = random.randint(0, child_random)
+                while new_row[child_col] in child_set:
+                    new_row[child_col] = random.randint(0, child_random)
+                child_set.add(new_row[child_col])
                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 
