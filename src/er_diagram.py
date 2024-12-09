@@ -91,7 +91,7 @@ class Table:
         self.df[self.name + "_id"] = range(len(dataset.df))
 
         for column_name, keyword_name in matches:
-            if keyword_name == "UNMATCHED":
+            if keyword_name == "UNMATCHED" or keyword_name not in dataset.df.columns:
                 self.add_fake_data(column_name)
             else:
                 dataset_column_idx = list(

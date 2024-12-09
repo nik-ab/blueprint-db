@@ -44,7 +44,8 @@ def generate():
     test_suite.adjust_relationships(er_diagram)
 
     # return sample database
-    return json.dumps([[table.df[:1000].to_json(), table.name] for table in er_diagram.tables])
+    return json.dumps([[table.df[:1000].to_json(), table.name] for table in er_diagram.tables] +
+                      [[relationship.df[:1000].to_json(), relationship.name] for relationship in er_diagram.relationships])
 
 
 if __name__ == '__main__':
