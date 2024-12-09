@@ -108,7 +108,6 @@ export class Attribute extends HTMLElement {
         this.shadowRoot.querySelector('#inner')?.classList.remove('grabbing');
       }
     }
-    console.log(name, oldValue, newValue)
 
     // Handle other attributes if needed
   }
