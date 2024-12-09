@@ -33,14 +33,12 @@ def check_one(relationship, direction):
         parents_with_children = from_ids
         parent_column = relationship.from_table.name + "_id"
         child_column = relationship.to_table.name + "_id"
-
         child_random = no_to_ids
     else:
         parents_without_children = to_set - from_ids
         parents_with_children = to_ids
         parent_column = relationship.to_table.name + "_id"
         child_column = relationship.from_table.name + "_id"
-
         child_random = no_from_ids
 
     if not parents_without_children:
@@ -66,60 +64,39 @@ def check_many(relationship, direction):
 
     df = relationship.df
 
-    # Check if one to zero relationships are represented
-    from_ids = set(df[relationship.from_table.name + "_id"])
-    to_ids = set(df[relationship.to_table.name + "_id"])
-
-    if direction == 0:
-        parents_with_children = from_ids
-        to_add = from_set
-        parent_column = relationship.from_table.name + "_id"
-    else:
-        parents_without_children = to_ids
-        to_add = to_set
-        parent_column = relationship.to_table.name + "_id"
-
-    if not parents_with_children:
-        df = add_fake_rows(df, to_add, parent_column, child_column, child_random)
-        from_ids = set(df[relationship.from_table.name + "_id"])
-        to_ids = set(df[relationship.to_table.name + "_id"])
-    
     # Check parents with exactly one child
     # Figure out if there are parents with 1 child
+    from_with_many_child = set()
     from_with_one_child = set()
     for parent_id in from_set:
         if list(df[relationship.from_table.name + "_id"]).count(parent_id) == 1:
             from_with_one_child.add(parent_id)
-
+        elif list(df[relationship.from_table.name + "_id"]).count(parent_id) > 1:
+            from_with_many_child.add(parent_id)
+    
+    to_with_many_child = set()
     to_with_one_child = set()
-    for parent_id in from_set:
+    for parent_id in to_set:
         if list(df[relationship.to_table.name + "_id"]).count(parent_id) == 1:
             to_with_one_child.add(parent_id)
+        elif list(df[relationship.to_table.name + "_id"]).count(parent_id) > 1:
+            to_with_many_child.add(parent_id)
 
     if direction == 0:
-        parents_without_children = from_set - from_ids
-        parents_with_children = from_ids
+        parents_with_many_child = from_with_many_child
+        parents_with_one_child = from_with_one_child
         parent_column = relationship.from_table.name + "_id"
         child_column = relationship.to_table.name + "_id"
         child_random = no_to_ids
-        many_parents = from_ids - from_with_one_child - parents_without_children
     else:
-        parents_without_children = to_set - from_ids
-        parents_with_children = to_ids
+        parents_with_many_child = to_with_many_child
+        parents_with_one_child = to_with_one_child
         parent_column = relationship.to_table.name + "_id"
         child_column = relationship.from_table.name + "_id"
         child_random = no_from_ids
-        many_parents = to_ids - to_with_one_child - parents_without_children
 
-    if not parents_without_children:
-        df = take_out_rows(df, parents_with_children, parent_column)
-    if not parents_with_children:
-        df = add_fake_rows(df, parents_without_children,
-                           parent_column, child_column, child_random)
-    if not many_parents:
-        df = add_fake_rows(df, parents_without_children,
-                           parent_column, child_column, child_random, 1)
-
+    if not parents_with_many_child:
+        df = add_fake_rows(df, parents_with_one_child, parent_column, child_column, child_random)
     return df
 
 
@@ -140,8 +117,8 @@ def adjust_relationships(diagram):
             relationship.df = check_many(relationship, 1)
         elif tp.value == 4:
             relationship.df = check_one(relationship, 0)
-            relationship.df = check_many(relationship, 0)
             relationship.df = check_one(relationship, 1)
+            relationship.df = check_many(relationship, 0)
             relationship.df = check_many(relationship, 1)
         else:
             raise ValueError(f"Unknown relationship type: {tp}")
@@ -153,7 +130,7 @@ def adjust_relationships(diagram):
 def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
     # Generate random 10% of ids that were passed
     ids = list(ids)
-    no_take_out = len(ids) // 20 if len(ids) // 20 != 0 else 1
+    no_take_out = len(ids) // 10 if len(ids) // 10 != 0 else 1
     random.shuffle(ids)
     ids = ids[:no_take_out]
 
@@ -163,13 +140,12 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
     tableCols = [{"name": col, "type": df[col].dtype.type}
                  for col in df.columns]
     fake_rows = get_fake_rows(tableCols, len(ids))
-
     child_set = set()
-
     for i in range(len(ids)):
         id = ids[i]
         fake_row = fake_rows[i]
         new_row = {}
+        
         # Go over the fake row and tableCols and append the fake data according to the fake row
         for i in range(len(fake_row)):
             col_name = tableCols[i]["name"]
@@ -186,17 +162,17 @@ def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
         # if many:
         #     # Choose a random number of children to add
         #     no_children = random.randint(1, 3)
-        #     for i in range(no_children):
-        #         new_row = {}
-        #         for i in range(len(fake_row)):
-        #             col_name = tableCols[i]["name"]
-        #             new_row[col_name] = fake_row[i]
-        #         new_row[par_col] = id
+        #     # for i in range(no_children):
+        #     new_row = {}
+        #     for i in range(len(fake_row)):
+        #         col_name = tableCols[i]["name"]
+        #         new_row[col_name] = fake_row[i]
+        #     new_row[par_col] = id
+        #     new_row[child_col] = random.randint(0, child_random)
+        #     while new_row[child_col] in child_set:
         #         new_row[child_col] = random.randint(0, child_random)
-        #         while new_row[child_col] in child_set:
-        #             new_row[child_col] = random.randint(0, child_random)
-        #         child_set.add(new_row[child_col])
-        #         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        #     child_set.add(new_row[child_col])
+        #     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 
 
