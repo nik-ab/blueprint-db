@@ -127,7 +127,7 @@ def adjust_relationships(diagram):
         print(relationship.df)
 
 
-def add_fake_rows(df, ids, par_col, child_col, child_random, many = 0):
+def add_fake_rows(df, ids, par_col, child_col, child_random):
     # Generate random 10% of ids that were passed
     ids = list(ids)
     no_take_out = len(ids) // 10 if len(ids) // 10 != 0 else 1
