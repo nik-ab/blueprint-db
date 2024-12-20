@@ -25,3 +25,5 @@ OpenAI packages might need migration to a older version, in that case we recomme
 
 **Running the server:** Navigate to the src folder and run `python server.py`
 **Running the front end:** Navigate to the client folder and run `python -m http.server`
+
+[Project Paper](BlueprintDB.pdf)
